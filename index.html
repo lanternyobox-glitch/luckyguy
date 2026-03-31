@@ -4,52 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Threads 抽獎工具</title>
+  <style>
+    body {
+      font-family: Arial, "Noto Sans TC", sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.6;
+    }
+    h1 {
+      margin-bottom: 8px;
+    }
+    .desc {
+      color: #555;
+      margin-bottom: 20px;
+    }
+    .box {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    #loginBtn {
+      background: #111;
+      color: white;
+    }
+    #showTokenBtn, #logoutBtn {
+      background: #f2f2f2;
+      color: #111;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 80px;
+    }
+    .small {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
   <h1>Threads 抽獎工具</h1>
+  <p class="desc">先完成 Threads 登入，成功後會回到 callback.html 交換 token。</p>
 
-  <button id="loginBtn">登入 Threads</button>
-  <button id="showTokenBtn">顯示目前 Token</button>
-  <button id="logoutBtn">清除 Token</button>
+  <div class="box">
+    <button id="loginBtn">登入 Threads</button>
+    <button id="showTokenBtn">顯示目前 Token</button>
+    <button id="logoutBtn">清除 Token</button>
+  </div>
 
-  <pre id="output"></pre>
+  <div class="box">
+    <div class="small">目前狀態</div>
+    <pre id="output"></pre>
+  </div>
 
   <script>
-    // 1. 改成你的 Meta App ID
-    const APP_ID = "你的_APP_ID";
+    // ===== 你要改的地方 =====
+    const APP_ID = "填入你的 Threads App ID";
+    const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
 
-    // 2. 這個網址必須和 Meta 後台設定的 Redirect URI 完全一致
-    const REDIRECT_URI = window.location.origin + window.location.pathname;
-
-    // 3. 你目前需要的 scopes，之後可再調整
+    // 依你目前需求先放這兩個
     const SCOPE = "threads_basic,threads_read_replies";
+
+    // Threads OAuth 授權端點
+    const AUTH_BASE = "https://threads.net/oauth/authorize";
 
     const output = document.getElementById("output");
 
     function log(msg) {
-      output.textContent = typeof msg === "string" ? msg : JSON.stringify(msg, null, 2);
-    }
-
-    function buildLoginUrl() {
-      const params = new URLSearchParams({
-        client_id: APP_ID,
-        redirect_uri: REDIRECT_URI,
-        scope: SCOPE,
-        response_type: "token"
-      });
-
-      return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
-    }
-
-    function parseAccessTokenFromHash() {
-      if (!window.location.hash) return null;
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      return params.get("access_token");
-    }
-
-    function saveToken(token) {
-      localStorage.setItem("threads_token", token);
+      output.textContent =
+        typeof msg === "string" ? msg : JSON.stringify(msg, null, 2);
     }
 
     function getSavedToken() {
@@ -60,30 +96,37 @@
       localStorage.removeItem("threads_token");
     }
 
-    function initAuth() {
-      const tokenFromHash = parseAccessTokenFromHash();
+    function buildLoginUrl() {
+      const params = new URLSearchParams({
+        client_id: APP_ID,
+        redirect_uri: REDIRECT_URI,
+        scope: SCOPE,
+        response_type: "code"
+      });
 
-      if (tokenFromHash) {
-        saveToken(tokenFromHash);
-        // 清掉網址上的 hash，避免 token 一直留在網址列
-        history.replaceState({}, document.title, REDIRECT_URI);
-        log("登入成功，token 已存到 localStorage。");
-        return;
-      }
+      return `${AUTH_BASE}?${params.toString()}`;
+    }
 
+    function initPage() {
       const token = getSavedToken();
+
       if (token) {
-        log("目前已有 token，可直接拿去測 API。");
+        log("目前已有 token，可進入下一步測 API。\n\n" + token);
       } else {
-        log("尚未登入。");
+        log(
+          "尚未登入。\n\n" +
+          "按下「登入 Threads」後，會跳去授權頁。\n" +
+          "授權成功後會先回到 callback.html，再由 callback.html 呼叫 Vercel 的 /api/exchange 換 token。"
+        );
       }
     }
 
     document.getElementById("loginBtn").addEventListener("click", () => {
-      if (!APP_ID || APP_ID === "你的_APP_ID") {
-        log("請先把 APP_ID 換成你的 Meta App ID。");
+      if (!APP_ID || APP_ID === "填入你的 Threads App ID") {
+        log("請先把 APP_ID 換成你的 Threads App ID。");
         return;
       }
+
       window.location.href = buildLoginUrl();
     });
 
@@ -97,7 +140,7 @@
       log("已清除 token");
     });
 
-    initAuth();
+    initPage();
   </script>
 </body>
 </html>
