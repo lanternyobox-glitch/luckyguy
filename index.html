@@ -71,14 +71,9 @@
   </div>
 
   <script>
-    // ===== 你要改的地方 =====
     const APP_ID = "1452647783001746";
     const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
-
-    // 依你目前需求先放這兩個
     const SCOPE = "threads_basic,threads_read_replies";
-
-    // Threads OAuth 授權端點
     const AUTH_BASE = "https://threads.net/oauth/authorize";
 
     const output = document.getElementById("output");
@@ -111,10 +106,16 @@
       const token = getSavedToken();
 
       if (token) {
-        log("目前已有 token，可進入下一步測 API。\n\n" + token);
+        log(
+          "目前已有 token，可進入下一步測 API。\n\n" +
+          "APP_ID: " + APP_ID + "\n\n" +
+          token
+        );
       } else {
         log(
           "尚未登入。\n\n" +
+          "APP_ID: " + APP_ID + "\n" +
+          "REDIRECT_URI: " + REDIRECT_URI + "\n\n" +
           "按下「登入 Threads」後，會跳去授權頁。\n" +
           "授權成功後會先回到 callback.html，再由 callback.html 呼叫 Vercel 的 /api/exchange 換 token。"
         );
@@ -122,12 +123,14 @@
     }
 
     document.getElementById("loginBtn").addEventListener("click", () => {
-      if (!APP_ID || APP_ID === "填入你的 Threads App ID") {
-        log("請先把 APP_ID 換成你的 Threads App ID。");
+      if (!APP_ID) {
+        log("APP_ID 是空的");
         return;
       }
 
-      window.location.href = buildLoginUrl();
+      const loginUrl = buildLoginUrl();
+      console.log("Login URL:", loginUrl);
+      window.location.href = loginUrl;
     });
 
     document.getElementById("showTokenBtn").addEventListener("click", () => {
