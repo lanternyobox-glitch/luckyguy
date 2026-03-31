@@ -368,7 +368,11 @@
       </div>
       <button id="openDonateBtn" class="btn-donate">支持本創作</button>
     </div>
-    <div class="desc">本工具由@lt_letsgo製作，依條件公平抽出中獎者</div>
+    <div class="desc">
+      本工具由
+      <a href="https://www.threads.com/@lt_letsgo" target="_blank" rel="noopener noreferrer">@lt_letsgo</a>
+      製作，依條件公平抽出中獎者
+    </div>
   </div>
 
   <div class="panel">
@@ -511,7 +515,7 @@
       </div>
 
       <div class="modal-footer">
-        <a id="donateLineLinkBtn" class="button-link btn-donate" href="#" target="_blank" rel="noopener noreferrer">開啟 LINE 好友連結</a>
+        <a id="donateLineLinkBtn" class="button-link btn-donate" href="https://line.me/ti/p/BOP26hK4Cv" target="_blank" rel="noopener noreferrer">開啟 LINE 好友連結</a>
         <button id="donateCloseBtn" class="btn-primary">關閉</button>
       </div>
     </div>
@@ -525,7 +529,6 @@
   const API_BASE = "https://luckyguy.vercel.app";
   const HISTORY_STORAGE_KEY = "threads_lucky_draw_history_v1";
 
-  // 把這裡改成你的 LINE 好友連結
   const DONATE_LINE_URL = "https://line.me/ti/p/BOP26hK4Cv";
 
   const statusBox = document.getElementById("statusBox");
