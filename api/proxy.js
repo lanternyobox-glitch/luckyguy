@@ -1,5 +1,19 @@
+const ALLOWED_ORIGIN = "https://lanternyobox-glitch.github.io";
+
+function isAllowedPath(path) {
+  if (typeof path !== "string" || !path.trim()) return false;
+
+  const allowedPatterns = [
+    /^me\?fields=[\w,._]+$/,
+    /^me\/threads\?fields=[\w,._]+$/,
+    /^\d+\/replies\?fields=[\w,._]+$/
+  ];
+
+  return allowedPatterns.some(pattern => pattern.test(path));
+}
+
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "https://lanternyobox-glitch.github.io");
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -20,6 +34,10 @@ export default async function handler(req, res) {
 
     if (!token) {
       return res.status(400).json({ error: "Missing token" });
+    }
+
+    if (!isAllowedPath(path)) {
+      return res.status(400).json({ error: "Path not allowed" });
     }
 
     const url = `https://graph.threads.net/v1.0/${path}`;
