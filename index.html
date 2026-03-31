@@ -7,65 +7,112 @@
   <style>
     body {
       font-family: Arial, "Noto Sans TC", sans-serif;
-      max-width: 960px;
-      margin: 40px auto;
-      padding: 0 16px;
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 16px 40px;
       line-height: 1.6;
+      background: #fafafa;
+      color: #111;
     }
 
-    h1 {
-      margin-bottom: 10px;
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    .hero {
+      background: white;
+      border: 1px solid #e7e7e7;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
     }
 
     .desc {
       color: #555;
-      margin-bottom: 20px;
+      margin: 8px 0 0;
     }
 
-    .box {
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+    .panel {
+      background: white;
+      border: 1px solid #e7e7e7;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     button {
       padding: 10px 16px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: none;
       cursor: pointer;
-      margin-right: 8px;
-      margin-bottom: 8px;
+      font-size: 15px;
     }
 
-    #loginBtn {
+    .btn-primary {
       background: #111;
       color: white;
     }
 
-    #showTokenBtn, #logoutBtn, #getMeBtn, #getPostsBtn {
-      background: #f2f2f2;
+    .btn-secondary {
+      background: #f1f1f1;
       color: #111;
     }
 
-    pre {
-      background: #f8f8f8;
-      padding: 12px;
-      border-radius: 12px;
+    .btn-success {
+      background: #1f7a3d;
+      color: white;
+    }
+
+    .status {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f7f7f7;
+      color: #333;
       white-space: pre-wrap;
-      word-break: break-all;
-      overflow-x: auto;
-      min-height: 60px;
+      word-break: break-word;
+      min-height: 24px;
     }
 
-    .post-item {
-      border: 1px solid #e2e2e2;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
     }
 
-    .post-id {
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .post-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .post-card {
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+      transition: 0.15s ease;
+    }
+
+    .post-card.active {
+      border-color: #111;
+      box-shadow: 0 0 0 2px rgba(17,17,17,0.06);
+    }
+
+    .meta {
       font-size: 12px;
       color: #666;
       margin-bottom: 8px;
@@ -73,31 +120,172 @@
     }
 
     .post-text {
+      font-size: 15px;
+      color: #111;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .side-box {
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #d7d7d7;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .reply-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .reply-list li {
+      margin-bottom: 8px;
+    }
+
+    .winner-box {
+      background: #fff8e6;
+      border: 1px solid #f2d48d;
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .winner-title {
+      font-weight: bold;
       margin-bottom: 10px;
+    }
+
+    .winner-list {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 14px;
+    }
+
+    a {
+      color: #0b57d0;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .summary-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .summary-pill {
+      background: #f3f3f3;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: #333;
     }
   </style>
 </head>
 <body>
 
-  <h1>Threads 抽獎工具</h1>
-  <p class="desc">先登入，再透過 Vercel proxy 抓我的資料、貼文與留言。</p>
-
-  <div class="box">
-    <button id="loginBtn">登入 Threads</button>
-    <button id="showTokenBtn">顯示 Token</button>
-    <button id="logoutBtn">清除 Token</button>
-    <button id="getMeBtn">取得我的資料</button>
-    <button id="getPostsBtn">取得我的貼文</button>
+  <div class="hero">
+    <h1>Threads 抽獎工具</h1>
+    <div class="desc">登入後讀取你的貼文，選一篇貼文抓留言，再直接抽出中獎者。</div>
   </div>
 
-  <div class="box">
-    <h3>狀態 / API 回應</h3>
-    <pre id="output"></pre>
+  <div class="panel">
+    <div class="toolbar">
+      <button id="loginBtn" class="btn-primary">登入 Threads</button>
+      <button id="getPostsBtn" class="btn-secondary">讀取我的貼文</button>
+      <button id="showTokenBtn" class="btn-secondary">查看登入狀態</button>
+      <button id="logoutBtn" class="btn-secondary">清除登入</button>
+    </div>
   </div>
 
-  <div class="box">
-    <h3>貼文列表</h3>
-    <div id="postsContainer">尚未載入</div>
+  <div class="panel">
+    <h3>目前狀態</h3>
+    <div id="statusBox" class="status">尚未登入</div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>我的貼文</h2>
+      <div id="postsContainer" class="post-list">
+        <div class="muted">尚未載入貼文</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>抽獎面板</h2>
+
+      <div class="side-box">
+        <div id="selectedPostTitle" class="muted">尚未選擇貼文</div>
+        <div class="summary-row">
+          <div class="summary-pill" id="replyCountPill">留言數：0</div>
+          <div class="summary-pill" id="uniqueCountPill">去重後人數：0</div>
+        </div>
+      </div>
+
+      <div class="side-box">
+        <label for="winnerCount">抽幾位中獎者</label>
+        <input id="winnerCount" type="number" min="1" value="1" />
+
+        <div class="checkbox-row">
+          <input id="dedupeCheckbox" type="checkbox" checked />
+          <label for="dedupeCheckbox" style="margin:0;">同一帳號只算一次</label>
+        </div>
+
+        <div class="toolbar">
+          <button id="drawBtn" class="btn-success">開始抽獎</button>
+        </div>
+      </div>
+
+      <div class="side-box">
+        <h3 style="margin-bottom:10px;">留言名單</h3>
+        <div id="replyListBox" class="muted">請先選擇貼文並載入留言</div>
+      </div>
+
+      <div class="winner-box">
+        <div class="winner-title">中獎者</div>
+        <div id="winnerBox" class="muted">尚未抽獎</div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -107,12 +295,22 @@
   const AUTH_URL = "https://threads.net/oauth/authorize";
   const API_BASE = "https://luckyguy.vercel.app";
 
-  const output = document.getElementById("output");
+  const statusBox = document.getElementById("statusBox");
   const postsContainer = document.getElementById("postsContainer");
+  const replyListBox = document.getElementById("replyListBox");
+  const winnerBox = document.getElementById("winnerBox");
+  const selectedPostTitle = document.getElementById("selectedPostTitle");
+  const replyCountPill = document.getElementById("replyCountPill");
+  const uniqueCountPill = document.getElementById("uniqueCountPill");
+  const winnerCountInput = document.getElementById("winnerCount");
+  const dedupeCheckbox = document.getElementById("dedupeCheckbox");
 
-  function log(msg) {
-    output.textContent =
-      typeof msg === "string" ? msg : JSON.stringify(msg, null, 2);
+  let postsData = [];
+  let selectedPost = null;
+  let currentReplies = [];
+
+  function setStatus(text) {
+    statusBox.textContent = text;
   }
 
   function getToken() {
@@ -130,7 +328,6 @@
       scope: SCOPE,
       response_type: "code"
     });
-
     return AUTH_URL + "?" + params.toString();
   }
 
@@ -146,123 +343,33 @@
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        path,
-        token
-      })
+      body: JSON.stringify({ path, token })
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(JSON.stringify(data, null, 2));
+      throw new Error(data?.error?.message || data?.error || JSON.stringify(data));
     }
 
     return data;
   }
 
-  async function getMe() {
-    const data = await proxyGet(
-      "me?fields=id,username,name,threads_profile_picture_url"
-    );
-    log(data);
+  function escapeHtml(str) {
+    return String(str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
-  async function getPosts() {
-    const data = await proxyGet(
-      "me/threads?fields=id,text,username,permalink,media_type,media_url,timestamp,shortcode"
-    );
-    log(data);
-
-    const posts = data.data || [];
-
-    if (!posts.length) {
-      postsContainer.innerHTML = "沒有抓到貼文";
-      return;
-    }
-
-    postsContainer.innerHTML = "";
-
-    posts.forEach(post => {
-      const div = document.createElement("div");
-      div.className = "post-item";
-
-      const text = post.text || "（沒有文字內容）";
-
-      div.innerHTML = `
-        <div class="post-id">Post ID: ${escapeHtml(post.id || "")}</div>
-        <div class="post-id">username: ${escapeHtml(post.username || "")}</div>
-        <div class="post-id">media_type: ${escapeHtml(post.media_type || "")}</div>
-        <div class="post-id">time: ${escapeHtml(post.timestamp || "")}</div>
-        <div class="post-text">${escapeHtml(text)}</div>
-        <div class="post-id">permalink: ${escapeHtml(post.permalink || "")}</div>
-        <button onclick="loadReplies('${post.id}')">抓這篇留言</button>
-        <button onclick="drawFromReplies('${post.id}')">這篇直接抽獎</button>
-        <pre id="replies-${post.id}">尚未載入留言</pre>
-      `;
-
-      postsContainer.appendChild(div);
-    });
-  }
-
-  async function loadReplies(postId) {
-    const target = document.getElementById(`replies-${postId}`);
-    target.textContent = "載入中...";
-
+  function formatDate(iso) {
+    if (!iso) return "未知時間";
     try {
-      const data = await proxyGet(
-        `${postId}/replies?fields=id,text,username,media_type,timestamp,permalink`
-      );
-      target.textContent = JSON.stringify(data, null, 2);
-    } catch (err) {
-      target.textContent = "抓留言失敗：\n" + err.message;
-    }
-  }
-
-  async function drawFromReplies(postId) {
-    const countText = prompt("要抽幾位中獎者？", "1");
-    const count = parseInt(countText, 10);
-
-    if (!count || count < 1) {
-      alert("請輸入正確的抽獎人數");
-      return;
-    }
-
-    try {
-      const data = await proxyGet(
-        `${postId}/replies?fields=id,text,username,media_type,timestamp,permalink`
-      );
-
-      const replies = data.data || [];
-
-      if (!replies.length) {
-        log("這篇目前沒有抓到留言");
-        return;
-      }
-
-      const usernames = replies
-        .map(item => item.username)
-        .filter(Boolean);
-
-      const uniqueUsers = [...new Set(usernames)];
-
-      if (!uniqueUsers.length) {
-        log("留言裡沒有可抽的 username");
-        return;
-      }
-
-      const winners = shuffle(uniqueUsers).slice(0, count);
-
-      log({
-        postId,
-        totalReplies: replies.length,
-        totalUniqueUsers: uniqueUsers.length,
-        winners
-      });
-
-      alert("中獎者：\n" + winners.join("\n"));
-    } catch (err) {
-      log("抽獎失敗：\n" + err.message);
+      return new Date(iso).toLocaleString("zh-TW");
+    } catch {
+      return iso;
     }
   }
 
@@ -275,61 +382,233 @@
     return copy;
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  function renderPosts(posts) {
+    if (!posts.length) {
+      postsContainer.innerHTML = `<div class="muted">沒有抓到貼文</div>`;
+      return;
+    }
+
+    postsContainer.innerHTML = "";
+
+    posts.forEach(post => {
+      const div = document.createElement("div");
+      div.className = "post-card";
+      div.id = `post-card-${post.id}`;
+
+      const text = post.text || "（沒有文字內容）";
+
+      div.innerHTML = `
+        <div class="meta">發文時間：${escapeHtml(formatDate(post.timestamp))}</div>
+        <div class="post-text">${escapeHtml(text)}</div>
+        <div class="meta">貼文連結：<a href="${escapeHtml(post.permalink || "#")}" target="_blank">開啟原文</a></div>
+        <div class="card-actions">
+          <button class="btn-secondary" onclick="selectPost('${post.id}')">選擇這篇</button>
+          <button class="btn-secondary" onclick="loadReplies('${post.id}')">載入留言</button>
+        </div>
+      `;
+
+      postsContainer.appendChild(div);
+    });
+  }
+
+  function updateSelectedCard(postId) {
+    document.querySelectorAll(".post-card").forEach(el => el.classList.remove("active"));
+    const card = document.getElementById(`post-card-${postId}`);
+    if (card) card.classList.add("active");
+  }
+
+  function renderReplyList(replies) {
+    if (!replies.length) {
+      replyListBox.innerHTML = `<div class="muted">目前沒有抓到留言</div>`;
+      replyCountPill.textContent = "留言數：0";
+      uniqueCountPill.textContent = "去重後人數：0";
+      return;
+    }
+
+    const usernames = replies.map(r => r.username).filter(Boolean);
+    const uniqueUsers = [...new Set(usernames)];
+
+    replyCountPill.textContent = `留言數：${replies.length}`;
+    uniqueCountPill.textContent = `去重後人數：${uniqueUsers.length}`;
+
+    const html = `
+      <ol class="reply-list">
+        ${replies.map(reply => `
+          <li>
+            <strong>@${escapeHtml(reply.username || "未知帳號")}</strong>
+            ${reply.text ? `：${escapeHtml(reply.text)}` : "：（無文字）"}
+          </li>
+        `).join("")}
+      </ol>
+    `;
+
+    replyListBox.innerHTML = html;
+  }
+
+  function renderWinners(winners) {
+    if (!winners.length) {
+      winnerBox.innerHTML = `<div class="muted">沒有抽出中獎者</div>`;
+      return;
+    }
+
+    winnerBox.innerHTML = `
+      <ol class="winner-list">
+        ${winners.map(name => `<li><strong>@${escapeHtml(name)}</strong></li>`).join("")}
+      </ol>
+    `;
+  }
+
+  async function getPosts() {
+    setStatus("正在讀取貼文...");
+    const data = await proxyGet(
+      "me/threads?fields=id,text,username,permalink,media_type,media_url,timestamp,shortcode"
+    );
+
+    postsData = data.data || [];
+    renderPosts(postsData);
+    setStatus(`已讀取 ${postsData.length} 篇貼文`);
+  }
+
+  async function getMe() {
+    setStatus("正在讀取帳號資料...");
+    const data = await proxyGet(
+      "me?fields=id,username,name,threads_profile_picture_url"
+    );
+
+    const username = data.username ? `@${data.username}` : "未知帳號";
+    const name = data.name || "未提供名稱";
+    setStatus(`登入成功\n帳號：${username}\n名稱：${name}`);
+  }
+
+  window.selectPost = function(postId) {
+    selectedPost = postsData.find(p => p.id === postId) || null;
+    updateSelectedCard(postId);
+    currentReplies = [];
+    renderReplyList([]);
+    renderWinners([]);
+
+    if (!selectedPost) {
+      selectedPostTitle.textContent = "尚未選擇貼文";
+      return;
+    }
+
+    selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
+    setStatus("已選擇貼文，接著可載入留言或直接抽獎");
+  };
+
+  window.loadReplies = async function(postId) {
+    try {
+      if (!selectedPost || selectedPost.id !== postId) {
+        window.selectPost(postId);
+      }
+
+      setStatus("正在載入留言...");
+      const data = await proxyGet(
+        `${postId}/replies?fields=id,text,username,media_type,timestamp,permalink`
+      );
+
+      currentReplies = data.data || [];
+      renderReplyList(currentReplies);
+      setStatus(`已載入留言，共 ${currentReplies.length} 則`);
+    } catch (err) {
+      setStatus("載入留言失敗：" + err.message);
+    }
+  };
+
+  function drawWinners() {
+    if (!selectedPost) {
+      setStatus("請先選擇一篇貼文");
+      return;
+    }
+
+    if (!currentReplies.length) {
+      setStatus("請先載入這篇貼文的留言");
+      return;
+    }
+
+    const winnerCount = parseInt(winnerCountInput.value, 10);
+
+    if (!winnerCount || winnerCount < 1) {
+      setStatus("請輸入正確的中獎人數");
+      return;
+    }
+
+    let pool = [];
+
+    if (dedupeCheckbox.checked) {
+      pool = [...new Set(currentReplies.map(r => r.username).filter(Boolean))];
+    } else {
+      pool = currentReplies.map(r => r.username).filter(Boolean);
+    }
+
+    if (!pool.length) {
+      setStatus("留言名單為空，無法抽獎");
+      return;
+    }
+
+    const winners = shuffle(pool).slice(0, Math.min(winnerCount, pool.length));
+    renderWinners(winners);
+
+    setStatus(
+      `抽獎完成\n` +
+      `貼文：${(selectedPost.text || "（沒有文字內容）").slice(0, 30)}\n` +
+      `抽出 ${winners.length} 位中獎者`
+    );
   }
 
   function init() {
     const token = getToken();
-
     if (token) {
-      log("✅ 已登入，可開始測 API");
+      setStatus("已登入，可先讀取帳號資料或貼文");
     } else {
-      log(
-        "尚未登入\n\n" +
-        "APP_ID: " + APP_ID + "\n" +
-        "REDIRECT_URI: " + REDIRECT_URI + "\n" +
-        "API_BASE: " + API_BASE
-      );
+      setStatus("尚未登入，請先登入 Threads");
     }
   }
 
   document.getElementById("loginBtn").onclick = () => {
-    const url = buildLoginUrl();
-    window.location.href = url;
+    window.location.href = buildLoginUrl();
   };
 
   document.getElementById("showTokenBtn").onclick = () => {
     const token = getToken();
-    log(token ? token : "❌ 沒有 token");
+    if (token) {
+      setStatus("目前已登入，token 已存在瀏覽器");
+    } else {
+      setStatus("目前沒有 token，請先登入");
+    }
   };
 
   document.getElementById("logoutBtn").onclick = () => {
     clearToken();
-    log("已清除 token");
-    postsContainer.innerHTML = "尚未載入";
-  };
-
-  document.getElementById("getMeBtn").onclick = async () => {
-    try {
-      await getMe();
-    } catch (err) {
-      log("取得我的資料失敗：\n" + err.message);
-    }
+    postsData = [];
+    selectedPost = null;
+    currentReplies = [];
+    postsContainer.innerHTML = `<div class="muted">尚未載入貼文</div>`;
+    replyListBox.innerHTML = `<div class="muted">請先選擇貼文並載入留言</div>`;
+    winnerBox.innerHTML = `<div class="muted">尚未抽獎</div>`;
+    selectedPostTitle.textContent = "尚未選擇貼文";
+    replyCountPill.textContent = "留言數：0";
+    uniqueCountPill.textContent = "去重後人數：0";
+    setStatus("已清除登入");
   };
 
   document.getElementById("getPostsBtn").onclick = async () => {
     try {
       await getPosts();
     } catch (err) {
-      log("取得貼文失敗：\n" + err.message);
+      setStatus("讀取貼文失敗：" + err.message);
     }
   };
+
+  document.getElementById("getMeBtn").onclick = async () => {
+    try {
+      await getMe();
+    } catch (err) {
+      setStatus("讀取帳號資料失敗：" + err.message);
+    }
+  };
+
+  document.getElementById("drawBtn").onclick = drawWinners;
 
   init();
 </script>
