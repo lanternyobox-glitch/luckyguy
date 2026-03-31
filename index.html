@@ -335,13 +335,13 @@
 
   <div class="hero">
     <h1>Threads 抽獎工具</h1>
-    <div class="desc">快速讀取 Threads 留言，依條件過濾後公平抽出中獎者。</div>
+    <div class="desc">本工具由@lt_letsgo製作，依條件公平抽出中獎者</div>
   </div>
 
   <div class="panel">
     <div class="toolbar">
       <button id="loginBtn" class="btn-primary">登入 Threads</button>
-      <button id="getPostsBtn" class="btn-secondary">讀取我的貼文</button>
+      <button id="getPostsBtn" class="btn-secondary">載入我的貼文</button>
       <button id="logoutBtn" class="btn-secondary">登出</button>
     </div>
   </div>
@@ -361,7 +361,7 @@
           <select id="postSelect">
             <option value="">請先讀取貼文</option>
           </select>
-          <div class="tiny">若 API 有回傳 pinned 欄位，會優先排序置頂文；否則照時間排序。</div>
+          <div class="tiny">默認按照時間排序</div>
         </div>
 
         <div id="postPreviewBox" class="side-box">
@@ -422,7 +422,7 @@
           <button id="drawBtn" class="btn-success">開始抽獎</button>
           <button id="redrawBtn" class="btn-secondary">重抽</button>
           <button id="copyWinnersBtn" class="btn-copy">複製中獎名單</button>
-          <button id="copyAnnouncementBtn" class="btn-copy">複製公告文案</button>
+          <button id="copyAnnouncementBtn" class="btn-copy">複製中獎文案</button>
         </div>
       </div>
 
@@ -448,7 +448,7 @@
           <li>抽獎結果以 Threads API 可取得的留言資料為準。</li>
           <li>平台可能因隱私、違規、屏蔽或可見性規則，導致部分留言無法被工具讀取。</li>
           <li>本工具只讀取資料，不會修改你的貼文或留言。</li>
-          <li>若使用重抽且勾選排除已中獎者，會從本次已載入的有效母池中排除先前中獎者。</li>
+          <li>若使用重抽且勾選排除已中獎者，會從本次已載入的有效總留言排除已中獎者。</li>
         </ul>
       </div>
     </div>
@@ -461,7 +461,7 @@
       <div id="modalWinners" class="modal-winners"></div>
       <div class="modal-footer">
         <button id="modalCopyBtn" class="btn-copy">複製名單</button>
-        <button id="modalAnnouncementBtn" class="btn-copy">複製公告文案</button>
+        <button id="modalAnnouncementBtn" class="btn-copy">複製中獎文案</button>
         <button id="modalCloseBtn" class="btn-primary">關閉</button>
       </div>
     </div>
@@ -791,7 +791,7 @@
     loadRepliesBtn.onclick = () => loadReplies(post.id);
 
     if (isLoadingReplies) {
-      setButtonLoading(loadRepliesBtn, "載入留言中...", true);
+      setButtonLoading(loadRepliesBtn, "到底誰會中獎呢...", true);
     }
   }
 
@@ -1160,9 +1160,9 @@
 
     try {
       await navigator.clipboard.writeText(text);
-      setStatus("已複製公告文案");
+      setStatus("已複製中獎文案");
     } catch {
-      setStatus("複製公告文案失敗，可能是瀏覽器權限限制");
+      setStatus("複製中獎文案失敗，可能是瀏覽器權限限制");
     }
   }
 
