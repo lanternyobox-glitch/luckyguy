@@ -900,7 +900,7 @@
       <div class="tiny">時間：${escapeHtml(formatDate(new Date().toISOString()))}</div>
       <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重複=${dedupeText}｜重抽排除已中獎=${excludePrevText}</div>
       <div style="margin-top:10px;"><strong>中獎名單：</strong>${winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
-      <div class="tiny" style="margin-top:8px;">由 Threads 抽獎工具產生</div>
+      <div class="tiny" style="margin-top:8px;">本Threads抽獎工具由 @lt_letsgo_ 製作</div>
     `;
     resultCard.classList.remove("hidden");
   }
