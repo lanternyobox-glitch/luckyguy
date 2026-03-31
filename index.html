@@ -4,27 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Threads 抽獎工具</title>
-
   <style>
     body {
       font-family: Arial, "Noto Sans TC", sans-serif;
-      max-width: 720px;
+      max-width: 900px;
       margin: 40px auto;
       padding: 0 16px;
       line-height: 1.6;
     }
-
-    h1 {
-      margin-bottom: 10px;
-    }
-
+    h1 { margin-bottom: 10px; }
     .box {
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
     }
-
     button {
       padding: 10px 16px;
       border-radius: 10px;
@@ -33,26 +27,32 @@
       margin-right: 8px;
       margin-bottom: 8px;
     }
-
-    #loginBtn {
-      background: #111;
-      color: white;
-    }
-
-    #showTokenBtn, #logoutBtn {
+    #loginBtn { background: #111; color: white; }
+    #showTokenBtn, #logoutBtn, #getMeBtn, #getPostsBtn {
       background: #f2f2f2;
     }
-
     pre {
       background: #f8f8f8;
       padding: 12px;
       border-radius: 12px;
       white-space: pre-wrap;
       word-break: break-all;
+      overflow-x: auto;
+    }
+    .post-item {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .post-id {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 8px;
+      word-break: break-all;
     }
   </style>
 </head>
-
 <body>
 
   <h1>Threads 抽獎工具</h1>
@@ -61,21 +61,28 @@
     <button id="loginBtn">登入 Threads</button>
     <button id="showTokenBtn">顯示 Token</button>
     <button id="logoutBtn">清除 Token</button>
+    <button id="getMeBtn">取得我的資料</button>
+    <button id="getPostsBtn">取得我的貼文</button>
   </div>
 
   <div class="box">
+    <h3>狀態 / API 回應</h3>
     <pre id="output"></pre>
   </div>
 
+  <div class="box">
+    <h3>貼文列表</h3>
+    <div id="postsContainer">尚未載入</div>
+  </div>
+
 <script>
-  // ===== Threads 設定 =====
-  const APP_ID = "1586005309177000"; // 🔥 Threads app ID
+  const APP_ID = "1586005309177000";
   const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
   const SCOPE = "threads_basic,threads_read_replies";
-
   const AUTH_URL = "https://threads.net/oauth/authorize";
 
   const output = document.getElementById("output");
+  const postsContainer = document.getElementById("postsContainer");
 
   function log(msg) {
     output.textContent =
@@ -97,30 +104,98 @@
       scope: SCOPE,
       response_type: "code"
     });
-
     return AUTH_URL + "?" + params.toString();
   }
 
-  // ===== 初始化 =====
-  function init() {
+  async function apiGet(url) {
     const token = getToken();
+    if (!token) {
+      throw new Error("沒有 token，請先登入");
+    }
 
-    if (token) {
-      log("✅ 已登入\n\nToken:\n" + token);
-    } else {
-      log(
-        "尚未登入\n\n" +
-        "APP_ID: " + APP_ID + "\n" +
-        "點擊登入開始 OAuth 流程"
-      );
+    const res = await fetch(url, {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(JSON.stringify(data));
+    }
+
+    return data;
+  }
+
+  async function getMe() {
+    const data = await apiGet("https://graph.threads.net/v1.0/me");
+    log(data);
+  }
+
+  async function getPosts() {
+    const data = await apiGet("https://graph.threads.net/v1.0/me/threads");
+    log(data);
+
+    const posts = data.data || [];
+    if (!posts.length) {
+      postsContainer.innerHTML = "沒有抓到貼文";
+      return;
+    }
+
+    postsContainer.innerHTML = "";
+
+    posts.forEach(post => {
+      const div = document.createElement("div");
+      div.className = "post-item";
+
+      const text = post.text || post.caption || "（沒有文字內容）";
+
+      div.innerHTML = `
+        <div class="post-id">Post ID: ${post.id}</div>
+        <div>${escapeHtml(text)}</div>
+        <div style="margin-top:10px;">
+          <button onclick="loadReplies('${post.id}')">抓這篇留言</button>
+        </div>
+        <pre id="replies-${post.id}" style="margin-top:10px;">尚未載入留言</pre>
+      `;
+
+      postsContainer.appendChild(div);
+    });
+  }
+
+  async function loadReplies(postId) {
+    const target = document.getElementById(`replies-${postId}`);
+    target.textContent = "載入中...";
+
+    try {
+      const data = await apiGet(`https://graph.threads.net/v1.0/${postId}/replies`);
+      target.textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+      target.textContent = "抓留言失敗：\n" + err.message;
     }
   }
 
-  // ===== 事件 =====
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function init() {
+    const token = getToken();
+    if (token) {
+      log("✅ 已登入，可開始測 API");
+    } else {
+      log("尚未登入");
+    }
+  }
+
   document.getElementById("loginBtn").onclick = () => {
     const url = buildLoginUrl();
-    console.log("LOGIN URL:", url);
-    log("跳轉中...\n\n" + url);
     window.location.href = url;
   };
 
@@ -132,6 +207,22 @@
   document.getElementById("logoutBtn").onclick = () => {
     clearToken();
     log("已清除 token");
+  };
+
+  document.getElementById("getMeBtn").onclick = async () => {
+    try {
+      await getMe();
+    } catch (err) {
+      log("取得我的資料失敗：\n" + err.message);
+    }
+  };
+
+  document.getElementById("getPostsBtn").onclick = async () => {
+    try {
+      await getPosts();
+    } catch (err) {
+      log("取得貼文失敗：\n" + err.message);
+    }
   };
 
   init();
