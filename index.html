@@ -1009,7 +1009,7 @@
     let allPosts = [];
 
     while (true) {
-      setStatus(`正在讀取貼文... 目前已抓到 ${allPosts.length} 篇`);
+      setStatus(`正在讀取貼文... 已讀取 ${allPosts.length} 篇`);
 
       const path = after
         ? `me/threads?fields=${fields}&after=${encodeURIComponent(after)}`
@@ -1304,7 +1304,7 @@
         ? `（預估總留言 ${lastEstimatedReplyCount}）`
         : "";
 
-      setStatus(`已載入 API 可取得留言，共 ${currentReplies.length} 則 ${totalText}`);
+      setStatus(`已載入成功 可取得留言，共 ${currentReplies.length} 則 ${totalText}`);
     } catch (err) {
       setStatus("載入留言失敗：" + err.message);
     } finally {
