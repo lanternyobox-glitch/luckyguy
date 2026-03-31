@@ -7,18 +7,28 @@
   <style>
     body {
       font-family: Arial, "Noto Sans TC", sans-serif;
-      max-width: 900px;
+      max-width: 960px;
       margin: 40px auto;
       padding: 0 16px;
       line-height: 1.6;
     }
-    h1 { margin-bottom: 10px; }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .desc {
+      color: #555;
+      margin-bottom: 20px;
+    }
+
     .box {
       border: 1px solid #ddd;
       border-radius: 12px;
       padding: 16px;
       margin-bottom: 16px;
     }
+
     button {
       padding: 10px 16px;
       border-radius: 10px;
@@ -27,10 +37,17 @@
       margin-right: 8px;
       margin-bottom: 8px;
     }
-    #loginBtn { background: #111; color: white; }
+
+    #loginBtn {
+      background: #111;
+      color: white;
+    }
+
     #showTokenBtn, #logoutBtn, #getMeBtn, #getPostsBtn {
       background: #f2f2f2;
+      color: #111;
     }
+
     pre {
       background: #f8f8f8;
       padding: 12px;
@@ -38,24 +55,32 @@
       white-space: pre-wrap;
       word-break: break-all;
       overflow-x: auto;
+      min-height: 60px;
     }
+
     .post-item {
-      border: 1px solid #ddd;
+      border: 1px solid #e2e2e2;
       border-radius: 12px;
       padding: 12px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
+
     .post-id {
       font-size: 12px;
       color: #666;
       margin-bottom: 8px;
       word-break: break-all;
     }
+
+    .post-text {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
 
   <h1>Threads 抽獎工具</h1>
+  <p class="desc">先登入，再透過 Vercel proxy 抓我的資料、貼文與留言。</p>
 
   <div class="box">
     <button id="loginBtn">登入 Threads</button>
@@ -76,10 +101,14 @@
   </div>
 
 <script>
-  const APP_ID = "1586005309177000";
+  // ===== 基本設定 =====
+  const APP_ID = "1586005309177000"; // 你的 Threads app ID
   const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
   const SCOPE = "threads_basic,threads_read_replies";
   const AUTH_URL = "https://threads.net/oauth/authorize";
+
+  // 你的 Vercel 網址
+  const API_BASE = "https://luckyguy.vercel.app";
 
   const output = document.getElementById("output");
   const postsContainer = document.getElementById("postsContainer");
@@ -104,40 +133,48 @@
       scope: SCOPE,
       response_type: "code"
     });
+
     return AUTH_URL + "?" + params.toString();
   }
 
-  async function apiGet(url) {
+  async function proxyGet(path) {
     const token = getToken();
+
     if (!token) {
       throw new Error("沒有 token，請先登入");
     }
 
-    const res = await fetch(url, {
+    const res = await fetch(`${API_BASE}/api/proxy`, {
+      method: "POST",
       headers: {
-        Authorization: "Bearer " + token
-      }
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        path,
+        token
+      })
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error(JSON.stringify(data));
+      throw new Error(JSON.stringify(data, null, 2));
     }
 
     return data;
   }
 
   async function getMe() {
-    const data = await apiGet("https://graph.threads.net/v1.0/me");
+    const data = await proxyGet("me");
     log(data);
   }
 
   async function getPosts() {
-    const data = await apiGet("https://graph.threads.net/v1.0/me/threads");
+    const data = await proxyGet("me/threads");
     log(data);
 
     const posts = data.data || [];
+
     if (!posts.length) {
       postsContainer.innerHTML = "沒有抓到貼文";
       return;
@@ -152,12 +189,10 @@
       const text = post.text || post.caption || "（沒有文字內容）";
 
       div.innerHTML = `
-        <div class="post-id">Post ID: ${post.id}</div>
-        <div>${escapeHtml(text)}</div>
-        <div style="margin-top:10px;">
-          <button onclick="loadReplies('${post.id}')">抓這篇留言</button>
-        </div>
-        <pre id="replies-${post.id}" style="margin-top:10px;">尚未載入留言</pre>
+        <div class="post-id">Post ID: ${escapeHtml(post.id || "")}</div>
+        <div class="post-text">${escapeHtml(text)}</div>
+        <button onclick="loadReplies('${post.id}')">抓這篇留言</button>
+        <pre id="replies-${post.id}">尚未載入留言</pre>
       `;
 
       postsContainer.appendChild(div);
@@ -169,7 +204,7 @@
     target.textContent = "載入中...";
 
     try {
-      const data = await apiGet(`https://graph.threads.net/v1.0/${postId}/replies`);
+      const data = await proxyGet(`${postId}/replies`);
       target.textContent = JSON.stringify(data, null, 2);
     } catch (err) {
       target.textContent = "抓留言失敗：\n" + err.message;
@@ -187,15 +222,23 @@
 
   function init() {
     const token = getToken();
+
     if (token) {
       log("✅ 已登入，可開始測 API");
     } else {
-      log("尚未登入");
+      log(
+        "尚未登入\n\n" +
+        "APP_ID: " + APP_ID + "\n" +
+        "REDIRECT_URI: " + REDIRECT_URI + "\n" +
+        "API_BASE: " + API_BASE
+      );
     }
   }
 
   document.getElementById("loginBtn").onclick = () => {
     const url = buildLoginUrl();
+    console.log("LOGIN URL:", url);
+    log("跳轉中...\n\n" + url);
     window.location.href = url;
   };
 
@@ -207,6 +250,7 @@
   document.getElementById("logoutBtn").onclick = () => {
     clearToken();
     log("已清除 token");
+    postsContainer.innerHTML = "尚未載入";
   };
 
   document.getElementById("getMeBtn").onclick = async () => {
