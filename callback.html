@@ -34,7 +34,7 @@
 
         if (!data.access_token) {
           document.getElementById("msg").innerText =
-            "換 token 失敗：" + JSON.stringify(data);
+            "換 token 失敗：" + JSON.stringify(data, null, 2);
           return;
         }
 
@@ -45,7 +45,6 @@
           window.location.href = "https://lanternyobox-glitch.github.io/luckyguy/";
         }, 1000);
       } catch (err) {
-        console.error(err);
         document.getElementById("msg").innerText = "請求失敗：" + err.message;
       }
     }
