@@ -19,7 +19,8 @@
       margin-top: 0;
     }
 
-    .hero, .panel {
+    .hero,
+    .panel {
       background: white;
       border: 1px solid #e7e7e7;
       border-radius: 18px;
@@ -53,7 +54,7 @@
     }
 
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.55;
       cursor: not-allowed;
     }
 
@@ -75,7 +76,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
+      grid-template-columns: 1.1fr 0.9fr;
       gap: 18px;
     }
 
@@ -83,45 +84,6 @@
       .grid {
         grid-template-columns: 1fr;
       }
-    }
-
-    .post-list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .post-card {
-      border: 1px solid #e5e5e5;
-      border-radius: 16px;
-      padding: 16px;
-      background: #fff;
-      transition: 0.15s ease;
-    }
-
-    .post-card.active {
-      border-color: #111;
-      box-shadow: 0 0 0 2px rgba(17,17,17,0.06);
-    }
-
-    .meta {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 8px;
-      word-break: break-all;
-    }
-
-    .post-text {
-      font-size: 15px;
-      color: #111;
-      margin-bottom: 12px;
-      white-space: pre-wrap;
-    }
-
-    .card-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
     }
 
     .side-box {
@@ -141,7 +103,8 @@
 
     input[type="number"],
     input[type="text"],
-    textarea {
+    textarea,
+    select {
       width: 100%;
       box-sizing: border-box;
       padding: 10px 12px;
@@ -150,10 +113,11 @@
       margin-bottom: 12px;
       font-size: 15px;
       font-family: inherit;
+      background: #fff;
     }
 
     textarea {
-      min-height: 80px;
+      min-height: 90px;
       resize: vertical;
     }
 
@@ -166,7 +130,12 @@
       color: #333;
     }
 
-    .reply-list, .winner-list {
+    .checkbox-row input {
+      margin: 0;
+    }
+
+    .reply-list,
+    .winner-list {
       margin: 0;
       padding-left: 20px;
     }
@@ -193,6 +162,11 @@
       font-size: 14px;
     }
 
+    .tiny {
+      font-size: 12px;
+      color: #777;
+    }
+
     a {
       color: #0b57d0;
       text-decoration: none;
@@ -217,22 +191,17 @@
       color: #333;
     }
 
+    .post-preview-text {
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+
     .result-card {
       border: 1px dashed #d6b86b;
       background: #fffdf7;
       border-radius: 14px;
       padding: 14px;
       margin-top: 12px;
-    }
-
-    .donate-box {
-      background: linear-gradient(135deg, #fff, #f7fff8);
-      border: 1px solid #d7eed9;
-    }
-
-    .tiny {
-      font-size: 12px;
-      color: #777;
     }
 
     .loading-spinner {
@@ -267,8 +236,17 @@
   <div class="grid">
     <div class="panel">
       <h2>我的貼文</h2>
-      <div id="postsContainer" class="post-list">
-        <div class="muted">尚未載入貼文</div>
+
+      <div class="side-box">
+        <label for="postSelect">選擇貼文</label>
+        <select id="postSelect">
+          <option value="">請先讀取貼文</option>
+        </select>
+        <div class="tiny">若 API 有提供置頂欄位，會自動優先列出置頂文。</div>
+      </div>
+
+      <div id="postPreviewBox" class="side-box">
+        <div class="muted">請先選擇一篇貼文</div>
       </div>
     </div>
 
@@ -288,8 +266,8 @@
         <label for="winnerCount">抽幾位中獎者</label>
         <input id="winnerCount" type="number" min="1" value="1" />
 
-        <label for="keywordInput">關鍵字過濾（可留空）</label>
-        <input id="keywordInput" type="text" placeholder="例如：我要報名, +1, 減脂" />
+        <label for="keywordInput">關鍵字過濾（可留空，逗號分隔）</label>
+        <input id="keywordInput" type="text" placeholder="例如：+1, 報名, 我要參加" />
 
         <label for="blacklistInput">黑名單帳號（每行一個，不用加 @）</label>
         <textarea id="blacklistInput" placeholder="user_a&#10;user_b"></textarea>
@@ -326,16 +304,6 @@
         <div id="winnerBox" class="muted">尚未抽獎</div>
         <div id="resultCard" class="result-card" style="display:none;"></div>
       </div>
-
-      <div class="side-box donate-box">
-        <h3 style="margin-bottom:8px;">支持這個工具</h3>
-        <div class="muted">如果這個工具有幫到你，可以請我喝杯飲料。</div>
-        <div style="margin-top:10px;">
-          <div><strong>Line Pay：</strong>之後可放付款連結</div>
-          <div><strong>轉帳：</strong>之後可放帳號末五碼</div>
-          <div class="tiny" style="margin-top:8px;">之後可升級為：免費版有限次數、贊助後解鎖完整功能</div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -347,7 +315,8 @@
   const API_BASE = "https://luckyguy.vercel.app";
 
   const statusBox = document.getElementById("statusBox");
-  const postsContainer = document.getElementById("postsContainer");
+  const postSelect = document.getElementById("postSelect");
+  const postPreviewBox = document.getElementById("postPreviewBox");
   const replyListBox = document.getElementById("replyListBox");
   const winnerBox = document.getElementById("winnerBox");
   const resultCard = document.getElementById("resultCard");
@@ -395,7 +364,10 @@
 
   async function proxyGet(path) {
     const token = getToken();
-    if (!token) throw new Error("沒有 token，請先登入");
+
+    if (!token) {
+      throw new Error("沒有 token，請先登入");
+    }
 
     const res = await fetch(`${API_BASE}/api/proxy`, {
       method: "POST",
@@ -432,6 +404,11 @@
     }
   }
 
+  function truncateText(text, max = 36) {
+    const str = String(text || "（沒有文字內容）").replace(/\s+/g, " ").trim();
+    return str.length > max ? str.slice(0, max) + "..." : str;
+  }
+
   function shuffle(arr) {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -439,6 +416,16 @@
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
+  }
+
+  function sortPosts(posts) {
+    return [...posts].sort((a, b) => {
+      const aPinned = Number(Boolean(a.is_pinned || a.pinned));
+      const bPinned = Number(Boolean(b.is_pinned || b.pinned));
+
+      if (bPinned !== aPinned) return bPinned - aPinned;
+      return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+    });
   }
 
   function parseBlacklist() {
@@ -463,7 +450,7 @@
     const blacklist = parseBlacklist();
     const keywords = getKeywordList();
 
-    let filtered = replies.filter(reply => {
+    return replies.filter(reply => {
       const username = String(reply.username || "").toLowerCase();
       const text = String(reply.text || "").trim();
       const textLower = text.toLowerCase();
@@ -475,43 +462,6 @@
 
       return true;
     });
-
-    return filtered;
-  }
-
-  function renderPosts(posts) {
-    if (!posts.length) {
-      postsContainer.innerHTML = `<div class="muted">沒有抓到貼文</div>`;
-      return;
-    }
-
-    postsContainer.innerHTML = "";
-
-    posts.forEach(post => {
-      const div = document.createElement("div");
-      div.className = "post-card";
-      div.id = `post-card-${post.id}`;
-
-      const text = post.text || "（沒有文字內容）";
-
-      div.innerHTML = `
-        <div class="meta">發文時間：${escapeHtml(formatDate(post.timestamp))}</div>
-        <div class="post-text">${escapeHtml(text)}</div>
-        <div class="meta">貼文連結：<a href="${escapeHtml(post.permalink || "#")}" target="_blank">開啟原文</a></div>
-        <div class="card-actions">
-          <button class="btn-secondary" onclick="selectPost('${post.id}')">選擇這篇</button>
-          <button class="btn-secondary" onclick="loadReplies('${post.id}')">載入留言</button>
-        </div>
-      `;
-
-      postsContainer.appendChild(div);
-    });
-  }
-
-  function updateSelectedCard(postId) {
-    document.querySelectorAll(".post-card").forEach(el => el.classList.remove("active"));
-    const card = document.getElementById(`post-card-${postId}`);
-    if (card) card.classList.add("active");
   }
 
   function updateCounts(allReplies, eligibleReplies) {
@@ -519,6 +469,43 @@
     replyCountPill.textContent = `留言數：${allReplies.length}`;
     eligibleCountPill.textContent = `符合條件：${eligibleReplies.length}`;
     uniqueCountPill.textContent = `去重後人數：${uniqueUsers.length}`;
+  }
+
+  function renderPostSelect(posts) {
+    if (!posts.length) {
+      postSelect.innerHTML = `<option value="">沒有抓到貼文</option>`;
+      return;
+    }
+
+    postSelect.innerHTML = `
+      <option value="">請選擇貼文</option>
+      ${posts.map(post => {
+        const isPinned = post.is_pinned || post.pinned;
+        const prefix = isPinned ? "📌 " : "";
+        const label = `${prefix}[${formatDate(post.timestamp)}] ${truncateText(post.text, 40)}`;
+        return `<option value="${post.id}">${escapeHtml(label)}</option>`;
+      }).join("")}
+    `;
+  }
+
+  function renderPostPreview(post, replyCount = null) {
+    if (!post) {
+      postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
+      return;
+    }
+
+    postPreviewBox.innerHTML = `
+      <div class="meta">發文時間：${escapeHtml(formatDate(post.timestamp))}</div>
+      <div class="post-preview-text">${escapeHtml(post.text || "（沒有文字內容）")}</div>
+      <div class="summary-row">
+        <div class="summary-pill">貼文 ID：${escapeHtml(post.id)}</div>
+        <div class="summary-pill">預估留言數：${replyCount == null ? "尚未讀取" : replyCount}</div>
+      </div>
+      <div class="toolbar" style="margin-top:12px;">
+        <a class="btn-secondary" href="${escapeHtml(post.permalink || "#")}" target="_blank" style="display:inline-block;text-decoration:none;">開啟原文</a>
+        <button class="btn-secondary" onclick="loadReplies('${post.id}')">載入留言</button>
+      </div>
+    `;
   }
 
   function renderReplyList(replies) {
@@ -568,52 +555,102 @@
     resultCard.style.display = "block";
   }
 
+  async function getAllPosts() {
+    const fields = "id,text,username,permalink,media_type,media_url,timestamp,shortcode,is_pinned,pinned";
+    let after = "";
+    let allPosts = [];
+    let page = 0;
+
+    while (true) {
+      page += 1;
+      setStatus(`正在讀取貼文... 第 ${page} 頁，目前已抓到 ${allPosts.length} 篇`);
+
+      const path = after
+        ? `me/threads?fields=${fields}&after=${encodeURIComponent(after)}`
+        : `me/threads?fields=${fields}`;
+
+      const data = await proxyGet(path);
+      const batch = data.data || [];
+      allPosts = allPosts.concat(batch);
+
+      const nextAfter = data?.paging?.cursors?.after;
+      if (!nextAfter || batch.length === 0) {
+        break;
+      }
+
+      after = nextAfter;
+    }
+
+    return sortPosts(allPosts);
+  }
+
   async function getPosts() {
-    setStatus("正在讀取貼文...");
-    const data = await proxyGet("me/threads?fields=id,text,username,permalink,media_type,media_url,timestamp,shortcode");
-    postsData = data.data || [];
-    renderPosts(postsData);
+    const posts = await getAllPosts();
+    postsData = posts;
+    renderPostSelect(postsData);
+    renderPostPreview(null);
     setStatus(`已讀取 ${postsData.length} 篇貼文`);
   }
 
-  window.selectPost = function(postId) {
-    selectedPost = postsData.find(p => p.id === postId) || null;
-    updateSelectedCard(postId);
-    currentReplies = [];
-    currentEligibleReplies = [];
-    lastWinners = [];
-    renderReplyList([]);
-    renderWinners([]);
-    updateCounts([], []);
+  async function getPostDetail(postId) {
+    try {
+      return await proxyGet(`${postId}?fields=id,text,permalink,timestamp,reply_count`);
+    } catch {
+      return null;
+    }
+  }
 
-    if (!selectedPost) {
-      selectedPostTitle.textContent = "尚未選擇貼文";
-      return;
+  async function getAllReplies(postId) {
+    const fields = "id,text,username,media_type,timestamp,permalink";
+    let after = "";
+    let allReplies = [];
+    let page = 0;
+    let estimatedTotal = null;
+    let estimatedPages = null;
+
+    const detail = await getPostDetail(postId);
+
+    if (detail && typeof detail.reply_count === "number") {
+      estimatedTotal = detail.reply_count;
+      estimatedPages = Math.max(1, Math.ceil(estimatedTotal / 25));
+
+      if (selectedPost && selectedPost.id === postId) {
+        selectedPost.reply_count = estimatedTotal;
+        renderPostPreview(selectedPost, estimatedTotal);
+      }
     }
 
-    selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
-    setStatus("已選擇貼文，接著可載入留言");
-  };
+    while (true) {
+      page += 1;
 
-  window.loadReplies = async function(postId) {
-    try {
-      if (!selectedPost || selectedPost.id !== postId) {
-        window.selectPost(postId);
+      if (estimatedPages) {
+        setStatus(`正在載入留言... 第 ${page}/${estimatedPages} 頁，已抓到 ${allReplies.length} 則`);
+      } else {
+        setStatus(`正在載入留言... 第 ${page} 頁，已抓到 ${allReplies.length} 則`);
       }
 
-      setStatus("正在載入留言...");
-      const data = await proxyGet(`${postId}/replies?fields=id,text,username,media_type,timestamp,permalink`);
+      const path = after
+        ? `${postId}/replies?fields=${fields}&after=${encodeURIComponent(after)}`
+        : `${postId}/replies?fields=${fields}`;
 
-      currentReplies = data.data || [];
-      currentEligibleReplies = applyFilters(currentReplies);
-      updateCounts(currentReplies, currentEligibleReplies);
-      renderReplyList(currentEligibleReplies);
-      renderWinners([]);
-      setStatus(`已載入留言，共 ${currentReplies.length} 則，符合條件 ${currentEligibleReplies.length} 則`);
-    } catch (err) {
-      setStatus("載入留言失敗：" + err.message);
+      const data = await proxyGet(path);
+      const batch = data.data || [];
+      allReplies = allReplies.concat(batch);
+
+      const nextAfter = data?.paging?.cursors?.after;
+      if (!nextAfter || batch.length === 0) {
+        break;
+      }
+
+      after = nextAfter;
     }
-  };
+
+    return {
+      replies: allReplies,
+      estimatedTotal,
+      estimatedPages
+    };
+  }
 
   function buildPool() {
     currentEligibleReplies = applyFilters(currentReplies);
@@ -623,6 +660,7 @@
     if (dedupeCheckbox.checked) {
       return [...new Set(currentEligibleReplies.map(r => r.username).filter(Boolean))];
     }
+
     return currentEligibleReplies.map(r => r.username).filter(Boolean);
   }
 
@@ -632,6 +670,7 @@
     copyWinnersBtn.disabled = true;
 
     const steps = ["抽獎中.", "抽獎中..", "抽獎中..."];
+
     for (let i = 0; i < 6; i++) {
       winnerBox.innerHTML = `<div class="loading-spinner">${steps[i % steps.length]}</div>`;
       await new Promise(resolve => setTimeout(resolve, 220));
@@ -654,12 +693,14 @@
     }
 
     const winnerCount = parseInt(winnerCountInput.value, 10);
+
     if (!winnerCount || winnerCount < 1) {
       setStatus("請輸入正確的中獎人數");
       return;
     }
 
     const pool = buildPool();
+
     if (!pool.length) {
       setStatus("符合條件的名單為空，無法抽獎");
       renderWinners([]);
@@ -696,6 +737,58 @@
     }
   }
 
+  window.selectPost = function(postId) {
+    selectedPost = postsData.find(p => p.id === postId) || null;
+    currentReplies = [];
+    currentEligibleReplies = [];
+    lastWinners = [];
+    renderReplyList([]);
+    renderWinners([]);
+    updateCounts([], []);
+
+    if (!selectedPost) {
+      selectedPostTitle.textContent = "尚未選擇貼文";
+      renderPostPreview(null);
+      return;
+    }
+
+    selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
+    renderPostPreview(selectedPost, selectedPost.reply_count ?? null);
+    setStatus("已選擇貼文，可載入留言");
+  };
+
+  window.loadReplies = async function(postId) {
+    try {
+      if (!selectedPost || selectedPost.id !== postId) {
+        window.selectPost(postId);
+      }
+
+      const result = await getAllReplies(postId);
+
+      currentReplies = result.replies || [];
+      currentEligibleReplies = applyFilters(currentReplies);
+
+      updateCounts(currentReplies, currentEligibleReplies);
+      renderReplyList(currentEligibleReplies);
+      renderWinners([]);
+
+      const totalText = result.estimatedTotal != null
+        ? `（預估總留言 ${result.estimatedTotal}）`
+        : "";
+
+      setStatus(`已載入留言，共 ${currentReplies.length} 則 ${totalText}`);
+    } catch (err) {
+      setStatus("載入留言失敗：" + err.message);
+    }
+  };
+
+  function refreshFilteredReplies() {
+    if (!currentReplies.length) return;
+    currentEligibleReplies = applyFilters(currentReplies);
+    updateCounts(currentReplies, currentEligibleReplies);
+    renderReplyList(currentEligibleReplies);
+  }
+
   function init() {
     const token = getToken();
     if (token) {
@@ -725,7 +818,9 @@
     currentReplies = [];
     currentEligibleReplies = [];
     lastWinners = [];
-    postsContainer.innerHTML = `<div class="muted">尚未載入貼文</div>`;
+
+    postSelect.innerHTML = `<option value="">請先讀取貼文</option>`;
+    postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
     replyListBox.innerHTML = `<div class="muted">請先選擇貼文並載入留言</div>`;
     winnerBox.innerHTML = `<div class="muted">尚未抽獎</div>`;
     resultCard.style.display = "none";
@@ -742,23 +837,25 @@
     }
   };
 
+  postSelect.addEventListener("change", (e) => {
+    const postId = e.target.value;
+    if (!postId) {
+      window.selectPost("");
+      return;
+    }
+    window.selectPost(postId);
+  });
+
   drawBtn.onclick = () => drawWinners(false);
   redrawBtn.onclick = () => drawWinners(true);
   copyWinnersBtn.onclick = copyWinners;
 
-  [keywordInput, blacklistInput, dedupeCheckbox, mustTagCheckbox, excludeEmptyCheckbox].forEach(el => {
-    el.addEventListener("input", () => {
-      if (!currentReplies.length) return;
-      currentEligibleReplies = applyFilters(currentReplies);
-      updateCounts(currentReplies, currentEligibleReplies);
-      renderReplyList(currentEligibleReplies);
-    });
-    el.addEventListener("change", () => {
-      if (!currentReplies.length) return;
-      currentEligibleReplies = applyFilters(currentReplies);
-      updateCounts(currentReplies, currentEligibleReplies);
-      renderReplyList(currentEligibleReplies);
-    });
+  [keywordInput, blacklistInput].forEach(el => {
+    el.addEventListener("input", refreshFilteredReplies);
+  });
+
+  [dedupeCheckbox, mustTagCheckbox, excludeEmptyCheckbox].forEach(el => {
+    el.addEventListener("change", refreshFilteredReplies);
   });
 
   init();
