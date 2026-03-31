@@ -17,7 +17,11 @@ function validatePath(path) {
   const params = new URLSearchParams(queryString);
 
   if (pathname === "me") {
-    return isSafeFields(params.get("fields")) && params.size === 1;
+    if (!isSafeFields(params.get("fields"))) return false;
+    for (const key of params.keys()) {
+      if (!["fields"].includes(key)) return false;
+    }
+    return true;
   }
 
   if (pathname === "me/threads") {
@@ -30,7 +34,6 @@ function validatePath(path) {
     for (const key of params.keys()) {
       if (!["fields", "after"].includes(key)) return false;
     }
-
     return true;
   }
 
@@ -41,7 +44,6 @@ function validatePath(path) {
     for (const key of params.keys()) {
       if (!["fields"].includes(key)) return false;
     }
-
     return true;
   }
 
@@ -55,7 +57,6 @@ function validatePath(path) {
     for (const key of params.keys()) {
       if (!["fields", "after"].includes(key)) return false;
     }
-
     return true;
   }
 
