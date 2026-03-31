@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const client_id = process.env.THREADS_APP_ID;
   const client_secret = process.env.THREADS_APP_SECRET;
 
-  const redirect_uri = "https://你的github網址/callback.html";
+  const redirect_uri = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
 
   try {
     const response = await fetch("https://graph.threads.net/oauth/access_token", {
