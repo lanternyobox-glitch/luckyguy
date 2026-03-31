@@ -101,13 +101,10 @@
   </div>
 
 <script>
-  // ===== 基本設定 =====
-  const APP_ID = "1586005309177000"; // 你的 Threads app ID
+  const APP_ID = "1586005309177000";
   const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
   const SCOPE = "threads_basic,threads_read_replies";
   const AUTH_URL = "https://threads.net/oauth/authorize";
-
-  // 你的 Vercel 網址
   const API_BASE = "https://luckyguy.vercel.app";
 
   const output = document.getElementById("output");
@@ -165,12 +162,16 @@
   }
 
   async function getMe() {
-    const data = await proxyGet("me");
+    const data = await proxyGet(
+      "me?fields=id,username,name,threads_profile_picture_url"
+    );
     log(data);
   }
 
   async function getPosts() {
-    const data = await proxyGet("me/threads");
+    const data = await proxyGet(
+      "me/threads?fields=id,text,username,permalink,media_type,media_url,timestamp,shortcode"
+    );
     log(data);
 
     const posts = data.data || [];
@@ -186,12 +187,17 @@
       const div = document.createElement("div");
       div.className = "post-item";
 
-      const text = post.text || post.caption || "（沒有文字內容）";
+      const text = post.text || "（沒有文字內容）";
 
       div.innerHTML = `
         <div class="post-id">Post ID: ${escapeHtml(post.id || "")}</div>
+        <div class="post-id">username: ${escapeHtml(post.username || "")}</div>
+        <div class="post-id">media_type: ${escapeHtml(post.media_type || "")}</div>
+        <div class="post-id">time: ${escapeHtml(post.timestamp || "")}</div>
         <div class="post-text">${escapeHtml(text)}</div>
+        <div class="post-id">permalink: ${escapeHtml(post.permalink || "")}</div>
         <button onclick="loadReplies('${post.id}')">抓這篇留言</button>
+        <button onclick="drawFromReplies('${post.id}')">這篇直接抽獎</button>
         <pre id="replies-${post.id}">尚未載入留言</pre>
       `;
 
@@ -204,11 +210,69 @@
     target.textContent = "載入中...";
 
     try {
-      const data = await proxyGet(`${postId}/replies`);
+      const data = await proxyGet(
+        `${postId}/replies?fields=id,text,username,media_type,timestamp,permalink`
+      );
       target.textContent = JSON.stringify(data, null, 2);
     } catch (err) {
       target.textContent = "抓留言失敗：\n" + err.message;
     }
+  }
+
+  async function drawFromReplies(postId) {
+    const countText = prompt("要抽幾位中獎者？", "1");
+    const count = parseInt(countText, 10);
+
+    if (!count || count < 1) {
+      alert("請輸入正確的抽獎人數");
+      return;
+    }
+
+    try {
+      const data = await proxyGet(
+        `${postId}/replies?fields=id,text,username,media_type,timestamp,permalink`
+      );
+
+      const replies = data.data || [];
+
+      if (!replies.length) {
+        log("這篇目前沒有抓到留言");
+        return;
+      }
+
+      const usernames = replies
+        .map(item => item.username)
+        .filter(Boolean);
+
+      const uniqueUsers = [...new Set(usernames)];
+
+      if (!uniqueUsers.length) {
+        log("留言裡沒有可抽的 username");
+        return;
+      }
+
+      const winners = shuffle(uniqueUsers).slice(0, count);
+
+      log({
+        postId,
+        totalReplies: replies.length,
+        totalUniqueUsers: uniqueUsers.length,
+        winners
+      });
+
+      alert("中獎者：\n" + winners.join("\n"));
+    } catch (err) {
+      log("抽獎失敗：\n" + err.message);
+    }
+  }
+
+  function shuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
   }
 
   function escapeHtml(str) {
@@ -237,8 +301,6 @@
 
   document.getElementById("loginBtn").onclick = () => {
     const url = buildLoginUrl();
-    console.log("LOGIN URL:", url);
-    log("跳轉中...\n\n" + url);
     window.location.href = url;
   };
 
