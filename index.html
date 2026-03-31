@@ -1,62 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Threads 抽獎工具</title>
 </head>
 <body>
+  <h1>Threads 抽獎工具</h1>
 
-<h2>Threads 抽獎工具</h2>
+  <button id="loginBtn">登入 Threads</button>
+  <button id="showTokenBtn">顯示目前 Token</button>
+  <button id="logoutBtn">清除 Token</button>
 
-<button onclick="login()">用 Threads 登入</button>
+  <pre id="output"></pre>
 
-<p id="status"></p>
+  <script>
+    // 1. 改成你的 Meta App ID
+    const APP_ID = "你的_APP_ID";
 
-<script>
-  const APP_ID = "你的APP_ID";
-  const REDIRECT_URI = window.location.origin + window.location.pathname;
+    // 2. 這個網址必須和 Meta 後台設定的 Redirect URI 完全一致
+    const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-  function login() {
-    const authUrl =
-      "https://www.facebook.com/v19.0/dialog/oauth" +
-      "?client_id=" + APP_ID +
-      "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) +
-      "&scope=threads_basic,threads_read_replies" +
-      "&response_type=token";
+    // 3. 你目前需要的 scopes，之後可再調整
+    const SCOPE = "threads_basic,threads_read_replies";
 
-    window.location.href = authUrl;
-  }
+    const output = document.getElementById("output");
 
-  function getTokenFromHash() {
-    const hash = window.location.hash;
-    if (!hash) return null;
-
-    const params = new URLSearchParams(hash.substring(1));
-    return params.get("access_token");
-  }
-
-  function init() {
-    const token = getTokenFromHash();
-
-    if (token) {
-      // 存起來（之後打API用）
-      localStorage.setItem("threads_token", token);
-
-      document.getElementById("status").innerText =
-        "✅ 登入成功，已取得 access token";
-
-      console.log("TOKEN:", token);
-
-      // 清掉 URL hash（避免洩漏）
-      window.history.replaceState(null, null, window.location.pathname);
-    } else {
-      document.getElementById("status").innerText =
-        "尚未登入";
+    function log(msg) {
+      output.textContent = typeof msg === "string" ? msg : JSON.stringify(msg, null, 2);
     }
-  }
 
-  init();
-</script>
+    function buildLoginUrl() {
+      const params = new URLSearchParams({
+        client_id: APP_ID,
+        redirect_uri: REDIRECT_URI,
+        scope: SCOPE,
+        response_type: "token"
+      });
 
+      return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
+    }
+
+    function parseAccessTokenFromHash() {
+      if (!window.location.hash) return null;
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      return params.get("access_token");
+    }
+
+    function saveToken(token) {
+      localStorage.setItem("threads_token", token);
+    }
+
+    function getSavedToken() {
+      return localStorage.getItem("threads_token");
+    }
+
+    function clearToken() {
+      localStorage.removeItem("threads_token");
+    }
+
+    function initAuth() {
+      const tokenFromHash = parseAccessTokenFromHash();
+
+      if (tokenFromHash) {
+        saveToken(tokenFromHash);
+        // 清掉網址上的 hash，避免 token 一直留在網址列
+        history.replaceState({}, document.title, REDIRECT_URI);
+        log("登入成功，token 已存到 localStorage。");
+        return;
+      }
+
+      const token = getSavedToken();
+      if (token) {
+        log("目前已有 token，可直接拿去測 API。");
+      } else {
+        log("尚未登入。");
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      if (!APP_ID || APP_ID === "你的_APP_ID") {
+        log("請先把 APP_ID 換成你的 Meta App ID。");
+        return;
+      }
+      window.location.href = buildLoginUrl();
+    });
+
+    document.getElementById("showTokenBtn").addEventListener("click", () => {
+      const token = getSavedToken();
+      log(token ? token : "目前沒有 token");
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      clearToken();
+      log("已清除 token");
+    });
+
+    initAuth();
+  </script>
 </body>
 </html>
