@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登入中...</title>
+</head>
+<body>
+  <p id="msg">登入中...</p>
+
+  <script>
+    async function run() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+
+      if (!code) {
+        document.getElementById("msg").innerText = "沒有拿到 code";
+        return;
+      }
+
+      document.getElementById("msg").innerText = "已拿到 code，正在換 token...";
+
+      try {
+        const res = await fetch("https://luckyguy.vercel.app/api/exchange", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ code })
+        });
+
+        const data = await res.json();
+        console.log("exchange result:", data);
+
+        if (!data.access_token) {
+          document.getElementById("msg").innerText =
+            "換 token 失敗：" + JSON.stringify(data);
+          return;
+        }
+
+        localStorage.setItem("threads_token", data.access_token);
+        document.getElementById("msg").innerText = "登入成功，1 秒後返回首頁";
+
+        setTimeout(() => {
+          window.location.href = "https://lanternyobox-glitch.github.io/luckyguy/";
+        }, 1000);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("msg").innerText = "請求失敗：" + err.message;
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
