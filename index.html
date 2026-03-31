@@ -5,14 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Threads 抽獎工具</title>
   <style>
+    :root {
+      --bg: #fafafa;
+      --card: #ffffff;
+      --border: #e7e7e7;
+      --text: #111;
+      --muted: #666;
+      --primary: #111;
+      --secondary: #f1f1f1;
+      --success: #1f7a3d;
+      --danger: #b42318;
+      --blue: #165dff;
+      --yellow-bg: #fff8e6;
+      --yellow-border: #f2d48d;
+      --shadow: 0 4px 14px rgba(0,0,0,0.03);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, "Noto Sans TC", sans-serif;
       max-width: 1200px;
       margin: 32px auto;
       padding: 0 16px 40px;
       line-height: 1.6;
-      background: #fafafa;
-      color: #111;
+      background: var(--bg);
+      color: var(--text);
     }
 
     h1, h2, h3 {
@@ -21,12 +41,12 @@
 
     .hero,
     .panel {
-      background: white;
-      border: 1px solid #e7e7e7;
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 18px;
       padding: 20px;
       margin-bottom: 18px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+      box-shadow: var(--shadow);
     }
 
     .desc {
@@ -40,29 +60,44 @@
       gap: 10px;
     }
 
-    button {
+    button,
+    .button-link {
       padding: 10px 16px;
       border-radius: 12px;
       border: none;
       cursor: pointer;
       font-size: 15px;
-      transition: 0.15s ease;
+      transition: transform 0.08s ease, opacity 0.15s ease, background 0.15s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
     }
 
-    button:hover {
-      opacity: 0.92;
+    button:hover,
+    .button-link:hover {
+      opacity: 0.93;
     }
 
-    button:disabled {
+    button:active,
+    .button-link:active,
+    .is-pressed {
+      transform: scale(0.98);
+    }
+
+    button:disabled,
+    .button-link[aria-disabled="true"] {
       opacity: 0.55;
       cursor: not-allowed;
+      pointer-events: none;
     }
 
-    .btn-primary { background: #111; color: white; }
-    .btn-secondary { background: #f1f1f1; color: #111; }
-    .btn-success { background: #1f7a3d; color: white; }
-    .btn-danger { background: #b42318; color: white; }
-    .btn-copy { background: #165dff; color: white; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: var(--secondary); color: var(--text); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-copy { background: var(--blue); color: white; }
 
     .status {
       padding: 14px 16px;
@@ -135,19 +170,22 @@
     }
 
     .reply-list,
-    .winner-list {
+    .winner-list,
+    .debug-list {
       margin: 0;
       padding-left: 20px;
     }
 
     .reply-list li,
-    .winner-list li {
+    .winner-list li,
+    .debug-list li {
       margin-bottom: 8px;
+      word-break: break-word;
     }
 
     .winner-box {
-      background: #fff8e6;
-      border: 1px solid #f2d48d;
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-border);
       border-radius: 16px;
       padding: 16px;
     }
@@ -158,7 +196,7 @@
     }
 
     .muted {
-      color: #666;
+      color: var(--muted);
       font-size: 14px;
     }
 
@@ -210,6 +248,67 @@
       font-weight: bold;
       letter-spacing: 1px;
     }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .debug-box {
+      background: #fcfcfc;
+      border: 1px dashed #d9d9d9;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal-card {
+      width: min(560px, 100%);
+      background: white;
+      border-radius: 20px;
+      border: 1px solid #e6e6e6;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+      padding: 22px;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .modal-sub {
+      color: #555;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .modal-winners {
+      background: #fff8e6;
+      border: 1px solid #f2d48d;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .modal-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
   </style>
 </head>
 <body>
@@ -242,11 +341,16 @@
         <select id="postSelect">
           <option value="">請先讀取貼文</option>
         </select>
-        <div class="tiny">若 API 有提供置頂欄位，會自動優先列出置頂文。</div>
+        <div class="tiny">若 API 有回傳 pinned 欄位，會優先排序置頂文；否則照時間排序。</div>
       </div>
 
       <div id="postPreviewBox" class="side-box">
         <div class="muted">請先選擇一篇貼文</div>
+      </div>
+
+      <div class="side-box debug-box">
+        <h3 style="margin-bottom:10px;">分頁偵錯資訊</h3>
+        <div id="debugBox" class="muted">尚未載入留言</div>
       </div>
     </div>
 
@@ -259,6 +363,7 @@
           <div class="summary-pill" id="replyCountPill">留言數：0</div>
           <div class="summary-pill" id="eligibleCountPill">符合條件：0</div>
           <div class="summary-pill" id="uniqueCountPill">去重後人數：0</div>
+          <div class="summary-pill hidden" id="estimatedReplyPill">預估留言數：0</div>
         </div>
       </div>
 
@@ -302,7 +407,19 @@
       <div class="winner-box">
         <div class="winner-title">中獎者</div>
         <div id="winnerBox" class="muted">尚未抽獎</div>
-        <div id="resultCard" class="result-card" style="display:none;"></div>
+        <div id="resultCard" class="result-card hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-title">抽獎結果</div>
+      <div id="modalSub" class="modal-sub"></div>
+      <div id="modalWinners" class="modal-winners"></div>
+      <div class="modal-footer">
+        <button id="modalCopyBtn" class="btn-copy">複製名單</button>
+        <button id="modalCloseBtn" class="btn-primary">關閉</button>
       </div>
     </div>
   </div>
@@ -324,6 +441,7 @@
   const replyCountPill = document.getElementById("replyCountPill");
   const eligibleCountPill = document.getElementById("eligibleCountPill");
   const uniqueCountPill = document.getElementById("uniqueCountPill");
+  const estimatedReplyPill = document.getElementById("estimatedReplyPill");
   const winnerCountInput = document.getElementById("winnerCount");
   const keywordInput = document.getElementById("keywordInput");
   const blacklistInput = document.getElementById("blacklistInput");
@@ -333,12 +451,22 @@
   const drawBtn = document.getElementById("drawBtn");
   const redrawBtn = document.getElementById("redrawBtn");
   const copyWinnersBtn = document.getElementById("copyWinnersBtn");
+  const debugBox = document.getElementById("debugBox");
+
+  const resultModal = document.getElementById("resultModal");
+  const modalSub = document.getElementById("modalSub");
+  const modalWinners = document.getElementById("modalWinners");
+  const modalCopyBtn = document.getElementById("modalCopyBtn");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
 
   let postsData = [];
   let selectedPost = null;
   let currentReplies = [];
   let currentEligibleReplies = [];
   let lastWinners = [];
+  let lastEstimatedReplyCount = null;
+  let isLoadingReplies = false;
+  let paginationDebugLogs = [];
 
   function setStatus(text) {
     statusBox.textContent = text;
@@ -364,7 +492,6 @@
 
   async function proxyGet(path) {
     const token = getToken();
-
     if (!token) {
       throw new Error("沒有 token，請先登入");
     }
@@ -416,6 +543,31 @@
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
+  }
+
+  function setButtonLoading(button, loadingText, isLoading) {
+    if (!button.dataset.originalText) {
+      button.dataset.originalText = button.textContent;
+    }
+
+    if (isLoading) {
+      button.textContent = loadingText;
+      button.disabled = true;
+      button.classList.add("is-pressed");
+    } else {
+      button.textContent = button.dataset.originalText;
+      button.disabled = false;
+      button.classList.remove("is-pressed");
+    }
+  }
+
+  function showEstimatedReplyCount(count) {
+    if (typeof count === "number" && Number.isFinite(count)) {
+      estimatedReplyPill.textContent = `預估留言數：${count}`;
+      estimatedReplyPill.classList.remove("hidden");
+    } else {
+      estimatedReplyPill.classList.add("hidden");
+    }
   }
 
   function sortPosts(posts) {
@@ -480,32 +632,42 @@
     postSelect.innerHTML = `
       <option value="">請選擇貼文</option>
       ${posts.map(post => {
-        const isPinned = post.is_pinned || post.pinned;
+        const isPinned = Boolean(post.is_pinned || post.pinned);
         const prefix = isPinned ? "📌 " : "";
-        const label = `${prefix}[${formatDate(post.timestamp)}] ${truncateText(post.text, 40)}`;
-        return `<option value="${post.id}">${escapeHtml(label)}</option>`;
+        const label = `${prefix}[${formatDate(post.timestamp)}] ${truncateText(post.text, 42)}`;
+        return `<option value="${escapeHtml(post.id)}">${escapeHtml(label)}</option>`;
       }).join("")}
     `;
   }
 
-  function renderPostPreview(post, replyCount = null) {
+  function renderPostPreview(post) {
     if (!post) {
       postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
       return;
     }
+
+    const estimatedBlock = typeof lastEstimatedReplyCount === "number"
+      ? `<div class="summary-pill">預估留言數：${escapeHtml(String(lastEstimatedReplyCount))}</div>`
+      : "";
 
     postPreviewBox.innerHTML = `
       <div class="meta">發文時間：${escapeHtml(formatDate(post.timestamp))}</div>
       <div class="post-preview-text">${escapeHtml(post.text || "（沒有文字內容）")}</div>
       <div class="summary-row">
         <div class="summary-pill">貼文 ID：${escapeHtml(post.id)}</div>
-        <div class="summary-pill">預估留言數：${replyCount == null ? "尚未讀取" : replyCount}</div>
+        ${estimatedBlock}
       </div>
       <div class="toolbar" style="margin-top:12px;">
-        <a class="btn-secondary" href="${escapeHtml(post.permalink || "#")}" target="_blank" style="display:inline-block;text-decoration:none;">開啟原文</a>
-        <button class="btn-secondary" onclick="loadReplies('${post.id}')">載入留言</button>
+        <a class="button-link btn-secondary" href="${escapeHtml(post.permalink || "#")}" target="_blank">開啟原文</a>
+        <button id="loadRepliesBtn" class="btn-secondary">載入留言</button>
       </div>
     `;
+
+    const loadRepliesBtn = document.getElementById("loadRepliesBtn");
+    loadRepliesBtn.onclick = () => loadReplies(post.id);
+    if (isLoadingReplies) {
+      setButtonLoading(loadRepliesBtn, "載入留言中...", true);
+    }
   }
 
   function renderReplyList(replies) {
@@ -526,10 +688,34 @@
     `;
   }
 
+  function renderDebugLogs() {
+    if (!paginationDebugLogs.length) {
+      debugBox.innerHTML = `<div class="muted">尚未載入留言</div>`;
+      return;
+    }
+
+    debugBox.innerHTML = `
+      <ol class="debug-list">
+        ${paginationDebugLogs.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ol>
+    `;
+  }
+
+  function resetDebugLogs() {
+    paginationDebugLogs = [];
+    renderDebugLogs();
+  }
+
+  function pushDebugLog(message) {
+    paginationDebugLogs.push(message);
+    renderDebugLogs();
+  }
+
   function renderWinners(winners) {
     if (!winners.length) {
       winnerBox.innerHTML = `<div class="muted">沒有抽出中獎者</div>`;
-      resultCard.style.display = "none";
+      resultCard.classList.add("hidden");
+      resultCard.innerHTML = "";
       return;
     }
 
@@ -552,7 +738,31 @@
       <div style="margin-top:10px;"><strong>中獎名單：</strong>${winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
       <div class="tiny" style="margin-top:8px;">由 Threads 抽獎工具產生</div>
     `;
-    resultCard.style.display = "block";
+    resultCard.classList.remove("hidden");
+  }
+
+  function openResultModal(winners) {
+    const postPreview = (selectedPost?.text || "（沒有文字內容）").slice(0, 60);
+    const pool = buildPool(false);
+
+    modalSub.textContent =
+      `貼文：${postPreview}\n` +
+      `符合資格母池：${pool.length} 人\n` +
+      `抽出：${winners.length} 位`;
+
+    modalWinners.innerHTML = `
+      <ol class="winner-list">
+        ${winners.map(name => `<li><strong>@${escapeHtml(name)}</strong></li>`).join("")}
+      </ol>
+    `;
+
+    resultModal.classList.add("show");
+    resultModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeResultModal() {
+    resultModal.classList.remove("show");
+    resultModal.setAttribute("aria-hidden", "true");
   }
 
   async function getAllPosts() {
@@ -570,7 +780,7 @@
         : `me/threads?fields=${fields}`;
 
       const data = await proxyGet(path);
-      const batch = data.data || [];
+      const batch = Array.isArray(data.data) ? data.data : [];
       allPosts = allPosts.concat(batch);
 
       const nextAfter = data?.paging?.cursors?.after;
@@ -603,25 +813,30 @@
   async function getAllReplies(postId) {
     const fields = "id,text,username,media_type,timestamp,permalink";
     let after = "";
-    let allReplies = [];
     let page = 0;
+    let allReplies = [];
     let estimatedTotal = null;
     let estimatedPages = null;
 
     const detail = await getPostDetail(postId);
-
     if (detail && typeof detail.reply_count === "number") {
       estimatedTotal = detail.reply_count;
       estimatedPages = Math.max(1, Math.ceil(estimatedTotal / 25));
-
-      if (selectedPost && selectedPost.id === postId) {
-        selectedPost.reply_count = estimatedTotal;
-        renderPostPreview(selectedPost, estimatedTotal);
-      }
     }
+
+    const seenReplyIds = new Set();
+    const seenCursors = new Set();
 
     while (true) {
       page += 1;
+
+      if (after) {
+        if (seenCursors.has(after)) {
+          pushDebugLog(`第 ${page} 頁：偵測到重複 cursor，提前停止。cursor=${after}`);
+          break;
+        }
+        seenCursors.add(after);
+      }
 
       if (estimatedPages) {
         setStatus(`正在載入留言... 第 ${page}/${estimatedPages} 頁，已抓到 ${allReplies.length} 則`);
@@ -634,10 +849,25 @@
         : `${postId}/replies?fields=${fields}`;
 
       const data = await proxyGet(path);
-      const batch = data.data || [];
-      allReplies = allReplies.concat(batch);
+      const batch = Array.isArray(data.data) ? data.data : [];
+      let duplicateInThisPage = 0;
 
-      const nextAfter = data?.paging?.cursors?.after;
+      for (const item of batch) {
+        if (!item?.id) continue;
+        if (seenReplyIds.has(item.id)) {
+          duplicateInThisPage += 1;
+          continue;
+        }
+        seenReplyIds.add(item.id);
+        allReplies.push(item);
+      }
+
+      const nextAfter = data?.paging?.cursors?.after || null;
+
+      pushDebugLog(
+        `第 ${page} 頁：API回傳 ${batch.length} 筆，新增 ${batch.length - duplicateInThisPage} 筆，重複 ${duplicateInThisPage} 筆，累計 ${allReplies.length} 筆，nextAfter=${nextAfter ? "有" : "無"}`
+      );
+
       if (!nextAfter || batch.length === 0) {
         break;
       }
@@ -652,10 +882,13 @@
     };
   }
 
-  function buildPool() {
+  function buildPool(shouldRender = true) {
     currentEligibleReplies = applyFilters(currentReplies);
-    updateCounts(currentReplies, currentEligibleReplies);
-    renderReplyList(currentEligibleReplies);
+
+    if (shouldRender) {
+      updateCounts(currentReplies, currentEligibleReplies);
+      renderReplyList(currentEligibleReplies);
+    }
 
     if (dedupeCheckbox.checked) {
       return [...new Set(currentEligibleReplies.map(r => r.username).filter(Boolean))];
@@ -670,8 +903,7 @@
     copyWinnersBtn.disabled = true;
 
     const steps = ["抽獎中.", "抽獎中..", "抽獎中..."];
-
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
       winnerBox.innerHTML = `<div class="loading-spinner">${steps[i % steps.length]}</div>`;
       await new Promise(resolve => setTimeout(resolve, 220));
     }
@@ -693,32 +925,39 @@
     }
 
     const winnerCount = parseInt(winnerCountInput.value, 10);
-
     if (!winnerCount || winnerCount < 1) {
       setStatus("請輸入正確的中獎人數");
       return;
     }
 
-    const pool = buildPool();
+    const clickedBtn = isRedraw ? redrawBtn : drawBtn;
+    setButtonLoading(clickedBtn, isRedraw ? "重抽中..." : "抽獎中...", true);
 
-    if (!pool.length) {
-      setStatus("符合條件的名單為空，無法抽獎");
-      renderWinners([]);
-      return;
+    try {
+      const pool = buildPool(true);
+
+      if (!pool.length) {
+        setStatus("符合條件的名單為空，無法抽獎");
+        renderWinners([]);
+        return;
+      }
+
+      await runDrawAnimation();
+
+      const winners = shuffle(pool).slice(0, Math.min(winnerCount, pool.length));
+      lastWinners = winners;
+      renderWinners(winners);
+      openResultModal(winners);
+
+      setStatus(
+        `${isRedraw ? "重抽完成" : "抽獎完成"}\n` +
+        `貼文：${(selectedPost.text || "（沒有文字內容）").slice(0, 30)}\n` +
+        `母池人數：${pool.length}\n` +
+        `抽出 ${winners.length} 位中獎者`
+      );
+    } finally {
+      setButtonLoading(clickedBtn, isRedraw ? "重抽中..." : "抽獎中...", false);
     }
-
-    await runDrawAnimation();
-
-    const winners = shuffle(pool).slice(0, Math.min(winnerCount, pool.length));
-    lastWinners = winners;
-    renderWinners(winners);
-
-    setStatus(
-      `${isRedraw ? "重抽完成" : "抽獎完成"}\n` +
-      `貼文：${(selectedPost.text || "（沒有文字內容）").slice(0, 30)}\n` +
-      `母池人數：${pool.length}\n` +
-      `抽出 ${winners.length} 位中獎者`
-    );
   }
 
   async function copyWinners() {
@@ -742,9 +981,13 @@
     currentReplies = [];
     currentEligibleReplies = [];
     lastWinners = [];
+    lastEstimatedReplyCount = null;
+
     renderReplyList([]);
     renderWinners([]);
     updateCounts([], []);
+    showEstimatedReplyCount(null);
+    resetDebugLogs();
 
     if (!selectedPost) {
       selectedPostTitle.textContent = "尚未選擇貼文";
@@ -753,40 +996,60 @@
     }
 
     selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
-    renderPostPreview(selectedPost, selectedPost.reply_count ?? null);
+    renderPostPreview(selectedPost);
     setStatus("已選擇貼文，可載入留言");
   };
 
-  window.loadReplies = async function(postId) {
+  async function loadReplies(postId) {
+    if (isLoadingReplies) return;
+
     try {
       if (!selectedPost || selectedPost.id !== postId) {
         window.selectPost(postId);
+      }
+
+      isLoadingReplies = true;
+      renderPostPreview(selectedPost);
+      resetDebugLogs();
+      setButtonLoading(drawBtn, "抽獎中...", false);
+      setButtonLoading(redrawBtn, "重抽中...", false);
+
+      const loadRepliesBtn = document.getElementById("loadRepliesBtn");
+      if (loadRepliesBtn) {
+        setButtonLoading(loadRepliesBtn, "載入留言中...", true);
       }
 
       const result = await getAllReplies(postId);
 
       currentReplies = result.replies || [];
       currentEligibleReplies = applyFilters(currentReplies);
+      lastEstimatedReplyCount = typeof result.estimatedTotal === "number" ? result.estimatedTotal : null;
 
+      showEstimatedReplyCount(lastEstimatedReplyCount);
       updateCounts(currentReplies, currentEligibleReplies);
       renderReplyList(currentEligibleReplies);
       renderWinners([]);
 
-      const totalText = result.estimatedTotal != null
-        ? `（預估總留言 ${result.estimatedTotal}）`
+      if (selectedPost && lastEstimatedReplyCount !== null) {
+        renderPostPreview(selectedPost);
+      }
+
+      const totalText = lastEstimatedReplyCount != null
+        ? `（預估總留言 ${lastEstimatedReplyCount}）`
         : "";
 
       setStatus(`已載入留言，共 ${currentReplies.length} 則 ${totalText}`);
     } catch (err) {
       setStatus("載入留言失敗：" + err.message);
+    } finally {
+      isLoadingReplies = false;
+      renderPostPreview(selectedPost);
     }
-  };
+  }
 
   function refreshFilteredReplies() {
     if (!currentReplies.length) return;
-    currentEligibleReplies = applyFilters(currentReplies);
-    updateCounts(currentReplies, currentEligibleReplies);
-    renderReplyList(currentEligibleReplies);
+    buildPool(true);
   }
 
   function init() {
@@ -818,22 +1081,31 @@
     currentReplies = [];
     currentEligibleReplies = [];
     lastWinners = [];
+    lastEstimatedReplyCount = null;
+    isLoadingReplies = false;
 
     postSelect.innerHTML = `<option value="">請先讀取貼文</option>`;
     postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
     replyListBox.innerHTML = `<div class="muted">請先選擇貼文並載入留言</div>`;
     winnerBox.innerHTML = `<div class="muted">尚未抽獎</div>`;
-    resultCard.style.display = "none";
+    resultCard.classList.add("hidden");
+    resultCard.innerHTML = "";
     selectedPostTitle.textContent = "尚未選擇貼文";
     updateCounts([], []);
+    showEstimatedReplyCount(null);
+    resetDebugLogs();
+    closeResultModal();
     setStatus("已清除登入");
   };
 
   document.getElementById("getPostsBtn").onclick = async () => {
     try {
+      setButtonLoading(document.getElementById("getPostsBtn"), "讀取中...", true);
       await getPosts();
     } catch (err) {
       setStatus("讀取貼文失敗：" + err.message);
+    } finally {
+      setButtonLoading(document.getElementById("getPostsBtn"), "讀取中...", false);
     }
   };
 
@@ -849,6 +1121,20 @@
   drawBtn.onclick = () => drawWinners(false);
   redrawBtn.onclick = () => drawWinners(true);
   copyWinnersBtn.onclick = copyWinners;
+  modalCopyBtn.onclick = copyWinners;
+  modalCloseBtn.onclick = closeResultModal;
+
+  resultModal.addEventListener("click", (e) => {
+    if (e.target === resultModal) {
+      closeResultModal();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeResultModal();
+    }
+  });
 
   [keywordInput, blacklistInput].forEach(el => {
     el.addEventListener("input", refreshFilteredReplies);
