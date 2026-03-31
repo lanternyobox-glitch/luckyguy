@@ -2,148 +2,15 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Threads 抽獎工具</title>
-  <style>
-    body {
-      font-family: Arial, "Noto Sans TC", sans-serif;
-      max-width: 720px;
-      margin: 40px auto;
-      padding: 0 16px;
-      line-height: 1.6;
-    }
-    h1 {
-      margin-bottom: 8px;
-    }
-    .desc {
-      color: #555;
-      margin-bottom: 20px;
-    }
-    .box {
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
-    #loginBtn {
-      background: #111;
-      color: white;
-    }
-    #showTokenBtn, #logoutBtn {
-      background: #f2f2f2;
-      color: #111;
-    }
-    pre {
-      white-space: pre-wrap;
-      word-break: break-all;
-      background: #f8f8f8;
-      border-radius: 12px;
-      padding: 12px;
-      min-height: 80px;
-    }
-    .small {
-      font-size: 14px;
-      color: #666;
-    }
-  </style>
 </head>
 <body>
   <h1>Threads 抽獎工具</h1>
-  <p class="desc">先完成 Threads 登入，成功後會回到 callback.html 交換 token。</p>
 
-  <div class="box">
-    <button id="loginBtn">登入 Threads</button>
-    <button id="showTokenBtn">顯示目前 Token</button>
-    <button id="logoutBtn">清除 Token</button>
-  </div>
-
-  <div class="box">
-    <div class="small">目前狀態</div>
-    <pre id="output"></pre>
-  </div>
-
-  <script>
-    const APP_ID = "1452647783001746";
-    const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
-    const SCOPE = "threads_basic,threads_read_replies";
-    const AUTH_BASE = "https://threads.net/oauth/authorize";
-
-    const output = document.getElementById("output");
-
-    function log(msg) {
-      output.textContent =
-        typeof msg === "string" ? msg : JSON.stringify(msg, null, 2);
-    }
-
-    function getSavedToken() {
-      return localStorage.getItem("threads_token");
-    }
-
-    function clearToken() {
-      localStorage.removeItem("threads_token");
-    }
-
-    function buildLoginUrl() {
-      const params = new URLSearchParams({
-        client_id: APP_ID,
-        redirect_uri: REDIRECT_URI,
-        scope: SCOPE,
-        response_type: "code"
-      });
-
-      return `${AUTH_BASE}?${params.toString()}`;
-    }
-
-    function initPage() {
-      const token = getSavedToken();
-
-      if (token) {
-        log(
-          "目前已有 token，可進入下一步測 API。\n\n" +
-          "APP_ID: " + APP_ID + "\n\n" +
-          token
-        );
-      } else {
-        log(
-          "尚未登入。\n\n" +
-          "APP_ID: " + APP_ID + "\n" +
-          "REDIRECT_URI: " + REDIRECT_URI + "\n\n" +
-          "按下「登入 Threads」後，會跳去授權頁。\n" +
-          "授權成功後會先回到 callback.html，再由 callback.html 呼叫 Vercel 的 /api/exchange 換 token。"
-        );
-      }
-    }
-
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      if (!APP_ID) {
-        log("APP_ID 是空的");
-        return;
-      }
-
-      const loginUrl = buildLoginUrl();
-      console.log("Login URL:", loginUrl);
-      window.location.href = loginUrl;
-    });
-
-    document.getElementById("showTokenBtn").addEventListener("click", () => {
-      const token = getSavedToken();
-      log(token ? token : "目前沒有 token");
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      clearToken();
-      log("已清除 token");
-    });
-
-    initPage();
-  </script>
+  <a
+    href="https://threads.net/oauth/authorize?client_id=1452647783001746&redirect_uri=https%3A%2F%2Flanternyobox-glitch.github.io%2Fluckyguy%2Fcallback.html&scope=threads_basic%2Cthreads_read_replies&response_type=code"
+  >
+    直接登入 Threads
+  </a>
 </body>
 </html>
