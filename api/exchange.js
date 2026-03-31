@@ -1,10 +1,11 @@
+const ALLOWED_ORIGIN = "https://lanternyobox-glitch.github.io";
+const REDIRECT_URI = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
+
 export default async function handler(req, res) {
-  // 允許你的 GitHub Pages 網址跨域呼叫
-  res.setHeader("Access-Control-Allow-Origin", "https://lanternyobox-glitch.github.io");
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // 瀏覽器 preflight 請求
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
@@ -22,7 +23,6 @@ export default async function handler(req, res) {
 
     const client_id = process.env.THREADS_APP_ID;
     const client_secret = process.env.THREADS_APP_SECRET;
-    const redirect_uri = "https://lanternyobox-glitch.github.io/luckyguy/callback.html";
 
     if (!client_id || !client_secret) {
       return res.status(500).json({
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
         client_id,
         client_secret,
         grant_type: "authorization_code",
-        redirect_uri,
+        redirect_uri: REDIRECT_URI,
         code
       })
     });
