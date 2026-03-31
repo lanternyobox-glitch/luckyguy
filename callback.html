@@ -14,11 +14,11 @@
       const code = params.get("code");
 
       if (!code) {
-        document.getElementById("msg").innerText = "沒有拿到 code";
+        document.getElementById("msg").innerText = "沒有權限，請洽開發者";
         return;
       }
 
-      document.getElementById("msg").innerText = "已拿到 code，正在換 token...";
+      document.getElementById("msg").innerText = "成功登入中．．．";
 
       try {
         const res = await fetch("https://luckyguy.vercel.app/api/exchange", {
