@@ -895,7 +895,7 @@
       <div><strong>抽獎結果</strong></div>
       <div class="tiny" style="margin-top:6px;">貼文：${escapeHtml(postPreview)}</div>
       <div class="tiny">時間：${escapeHtml(formatDate(new Date().toISOString()))}</div>
-      <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重=${dedupeText}｜重抽排除已中獎=${excludePrevText}</div>
+      <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重複=${dedupeText}｜重抽排除已中獎=${excludePrevText}</div>
       <div style="margin-top:10px;"><strong>中獎名單：</strong>${winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
       <div class="tiny" style="margin-top:8px;">由 Threads 抽獎工具產生</div>
     `;
@@ -994,7 +994,7 @@
       <div class="history-card">
         <div class="history-meta">${escapeHtml(item.time)}</div>
         <div class="history-title">${escapeHtml(item.postPreview)}</div>
-        <div class="tiny">條件：關鍵字=${escapeHtml(item.keywordText)}｜需Tag=${escapeHtml(item.mustTagText)}｜去重=${escapeHtml(item.dedupeText)}｜排除已中獎=${escapeHtml(item.excludePrevText)}</div>
+        <div class="tiny">條件：關鍵字=${escapeHtml(item.keywordText)}｜需Tag=${escapeHtml(item.mustTagText)}｜去重複=${escapeHtml(item.dedupeText)}｜排除已中獎=${escapeHtml(item.excludePrevText)}</div>
         <div style="margin-top:8px;"><strong>中獎者：</strong>${item.winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
       </div>
     `).join("");
