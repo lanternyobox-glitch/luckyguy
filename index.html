@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Threads 抽獎工具</title>
+</head>
+<body>
+
+<h2>Threads 抽獎工具</h2>
+
+<button onclick="login()">用 Threads 登入</button>
+
+<p id="status"></p>
+
+<script>
+  const APP_ID = "你的APP_ID";
+  const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+  function login() {
+    const authUrl =
+      "https://www.facebook.com/v19.0/dialog/oauth" +
+      "?client_id=" + APP_ID +
+      "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) +
+      "&scope=threads_basic,threads_read_replies" +
+      "&response_type=token";
+
+    window.location.href = authUrl;
+  }
+
+  function getTokenFromHash() {
+    const hash = window.location.hash;
+    if (!hash) return null;
+
+    const params = new URLSearchParams(hash.substring(1));
+    return params.get("access_token");
+  }
+
+  function init() {
+    const token = getTokenFromHash();
+
+    if (token) {
+      // 存起來（之後打API用）
+      localStorage.setItem("threads_token", token);
+
+      document.getElementById("status").innerText =
+        "✅ 登入成功，已取得 access token";
+
+      console.log("TOKEN:", token);
+
+      // 清掉 URL hash（避免洩漏）
+      window.history.replaceState(null, null, window.location.pathname);
+    } else {
+      document.getElementById("status").innerText =
+        "尚未登入";
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>
