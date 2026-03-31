@@ -1,15 +1,65 @@
 const ALLOWED_ORIGIN = "https://lanternyobox-glitch.github.io";
 
-function isAllowedPath(path) {
-  if (typeof path !== "string" || !path.trim()) return false;
+function isSafeFields(value) {
+  return typeof value === "string" && /^[\w,._]+$/.test(value);
+}
 
-  const allowedPatterns = [
-    /^me\?fields=[\w,._]+$/,
-    /^me\/threads\?fields=[\w,._]+$/,
-    /^\d+\/replies\?fields=[\w,._]+$/
-  ];
+function isSafeCursor(value) {
+  return typeof value === "string" && value.length > 0 && /^[A-Za-z0-9%._=-]+$/.test(value);
+}
 
-  return allowedPatterns.some(pattern => pattern.test(path));
+function validatePath(path) {
+  if (typeof path !== "string" || !path.trim()) {
+    return false;
+  }
+
+  const [pathname, queryString = ""] = path.split("?");
+  const params = new URLSearchParams(queryString);
+
+  if (pathname === "me") {
+    return isSafeFields(params.get("fields")) && params.size === 1;
+  }
+
+  if (pathname === "me/threads") {
+    const fields = params.get("fields");
+    const after = params.get("after");
+
+    if (!isSafeFields(fields)) return false;
+    if (after && !isSafeCursor(after)) return false;
+
+    for (const key of params.keys()) {
+      if (!["fields", "after"].includes(key)) return false;
+    }
+
+    return true;
+  }
+
+  if (/^\d+$/.test(pathname)) {
+    const fields = params.get("fields");
+    if (!isSafeFields(fields)) return false;
+
+    for (const key of params.keys()) {
+      if (!["fields"].includes(key)) return false;
+    }
+
+    return true;
+  }
+
+  if (/^\d+\/replies$/.test(pathname)) {
+    const fields = params.get("fields");
+    const after = params.get("after");
+
+    if (!isSafeFields(fields)) return false;
+    if (after && !isSafeCursor(after)) return false;
+
+    for (const key of params.keys()) {
+      if (!["fields", "after"].includes(key)) return false;
+    }
+
+    return true;
+  }
+
+  return false;
 }
 
 export default async function handler(req, res) {
@@ -36,7 +86,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing token" });
     }
 
-    if (!isAllowedPath(path)) {
+    if (!validatePath(path)) {
       return res.status(400).json({ error: "Path not allowed" });
     }
 
