@@ -50,12 +50,14 @@ function validatePath(path) {
   if (/^\d+\/replies$/.test(pathname)) {
     const fields = params.get("fields");
     const after = params.get("after");
+    const limit = params.get("limit");
 
     if (!isSafeFields(fields)) return false;
     if (after && !isSafeCursor(after)) return false;
+    if (limit && !/^\d+$/.test(limit)) return false;
 
     for (const key of params.keys()) {
-      if (!["fields", "after"].includes(key)) return false;
+      if (!["fields", "after", "limit"].includes(key)) return false;
     }
     return true;
   }
