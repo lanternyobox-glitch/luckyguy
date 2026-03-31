@@ -171,14 +171,16 @@
 
     .reply-list,
     .winner-list,
-    .debug-list {
+    .history-list,
+    .summary-list {
       margin: 0;
       padding-left: 20px;
     }
 
     .reply-list li,
     .winner-list li,
-    .debug-list li {
+    .history-list li,
+    .summary-list li {
       margin-bottom: 8px;
       word-break: break-word;
     }
@@ -253,9 +255,27 @@
       display: none !important;
     }
 
-    .debug-box {
+    .notice-box {
       background: #fcfcfc;
-      border: 1px dashed #d9d9d9;
+    }
+
+    .history-card {
+      border: 1px solid #ededed;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+
+    .history-meta {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .history-title {
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
     .modal-backdrop {
@@ -315,15 +335,14 @@
 
   <div class="hero">
     <h1>Threads 抽獎工具</h1>
-    <div class="desc">登入後讀取你的貼文，選一篇貼文抓留言，再直接抽出中獎者。</div>
+    <div class="desc">快速讀取 Threads 留言，依條件過濾後公平抽出中獎者。</div>
   </div>
 
   <div class="panel">
     <div class="toolbar">
       <button id="loginBtn" class="btn-primary">登入 Threads</button>
       <button id="getPostsBtn" class="btn-secondary">讀取我的貼文</button>
-      <button id="showTokenBtn" class="btn-secondary">查看登入狀態</button>
-      <button id="logoutBtn" class="btn-secondary">清除登入</button>
+      <button id="logoutBtn" class="btn-secondary">登出</button>
     </div>
   </div>
 
@@ -333,24 +352,26 @@
   </div>
 
   <div class="grid">
-    <div class="panel">
-      <h2>我的貼文</h2>
+    <div>
+      <div class="panel">
+        <h2>我的貼文</h2>
 
-      <div class="side-box">
-        <label for="postSelect">選擇貼文</label>
-        <select id="postSelect">
-          <option value="">請先讀取貼文</option>
-        </select>
-        <div class="tiny">若 API 有回傳 pinned 欄位，會優先排序置頂文；否則照時間排序。</div>
+        <div class="side-box">
+          <label for="postSelect">選擇貼文</label>
+          <select id="postSelect">
+            <option value="">請先讀取貼文</option>
+          </select>
+          <div class="tiny">若 API 有回傳 pinned 欄位，會優先排序置頂文；否則照時間排序。</div>
+        </div>
+
+        <div id="postPreviewBox" class="side-box">
+          <div class="muted">請先選擇一篇貼文</div>
+        </div>
       </div>
 
-      <div id="postPreviewBox" class="side-box">
-        <div class="muted">請先選擇一篇貼文</div>
-      </div>
-
-      <div class="side-box debug-box">
-        <h3 style="margin-bottom:10px;">分頁偵錯資訊</h3>
-        <div id="debugBox" class="muted">尚未載入留言</div>
+      <div class="panel">
+        <h2>抽獎紀錄</h2>
+        <div id="historyBox" class="muted">目前沒有抽獎紀錄</div>
       </div>
     </div>
 
@@ -392,11 +413,22 @@
           <label for="excludeEmptyCheckbox" style="margin:0;">排除空白留言</label>
         </div>
 
+        <div class="checkbox-row">
+          <input id="excludePreviousWinnersCheckbox" type="checkbox" />
+          <label for="excludePreviousWinnersCheckbox" style="margin:0;">重抽時排除本次已中獎者</label>
+        </div>
+
         <div class="toolbar">
           <button id="drawBtn" class="btn-success">開始抽獎</button>
           <button id="redrawBtn" class="btn-secondary">重抽</button>
           <button id="copyWinnersBtn" class="btn-copy">複製中獎名單</button>
+          <button id="copyAnnouncementBtn" class="btn-copy">複製公告文案</button>
         </div>
+      </div>
+
+      <div class="side-box">
+        <h3 style="margin-bottom:10px;">資格摘要</h3>
+        <div id="qualificationSummaryBox" class="muted">請先載入留言</div>
       </div>
 
       <div class="side-box">
@@ -409,6 +441,16 @@
         <div id="winnerBox" class="muted">尚未抽獎</div>
         <div id="resultCard" class="result-card hidden"></div>
       </div>
+
+      <div class="side-box notice-box">
+        <h3 style="margin-bottom:10px;">注意事項</h3>
+        <ul class="summary-list">
+          <li>抽獎結果以 Threads API 可取得的留言資料為準。</li>
+          <li>平台可能因隱私、違規、屏蔽或可見性規則，導致部分留言無法被工具讀取。</li>
+          <li>本工具只讀取資料，不會修改你的貼文或留言。</li>
+          <li>若使用重抽且勾選排除已中獎者，會從本次已載入的有效母池中排除先前中獎者。</li>
+        </ul>
+      </div>
     </div>
   </div>
 
@@ -419,6 +461,7 @@
       <div id="modalWinners" class="modal-winners"></div>
       <div class="modal-footer">
         <button id="modalCopyBtn" class="btn-copy">複製名單</button>
+        <button id="modalAnnouncementBtn" class="btn-copy">複製公告文案</button>
         <button id="modalCloseBtn" class="btn-primary">關閉</button>
       </div>
     </div>
@@ -430,6 +473,7 @@
   const SCOPE = "threads_basic,threads_read_replies";
   const AUTH_URL = "https://threads.net/oauth/authorize";
   const API_BASE = "https://luckyguy.vercel.app";
+  const HISTORY_STORAGE_KEY = "threads_lucky_draw_history_v1";
 
   const statusBox = document.getElementById("statusBox");
   const postSelect = document.getElementById("postSelect");
@@ -448,15 +492,19 @@
   const dedupeCheckbox = document.getElementById("dedupeCheckbox");
   const mustTagCheckbox = document.getElementById("mustTagCheckbox");
   const excludeEmptyCheckbox = document.getElementById("excludeEmptyCheckbox");
+  const excludePreviousWinnersCheckbox = document.getElementById("excludePreviousWinnersCheckbox");
   const drawBtn = document.getElementById("drawBtn");
   const redrawBtn = document.getElementById("redrawBtn");
   const copyWinnersBtn = document.getElementById("copyWinnersBtn");
-  const debugBox = document.getElementById("debugBox");
+  const copyAnnouncementBtn = document.getElementById("copyAnnouncementBtn");
+  const qualificationSummaryBox = document.getElementById("qualificationSummaryBox");
+  const historyBox = document.getElementById("historyBox");
 
   const resultModal = document.getElementById("resultModal");
   const modalSub = document.getElementById("modalSub");
   const modalWinners = document.getElementById("modalWinners");
   const modalCopyBtn = document.getElementById("modalCopyBtn");
+  const modalAnnouncementBtn = document.getElementById("modalAnnouncementBtn");
   const modalCloseBtn = document.getElementById("modalCloseBtn");
 
   let postsData = [];
@@ -466,7 +514,7 @@
   let lastWinners = [];
   let lastEstimatedReplyCount = null;
   let isLoadingReplies = false;
-  let paginationDebugLogs = [];
+  let currentRoundWinnerSet = new Set();
 
   function setStatus(text) {
     statusBox.textContent = text;
@@ -546,6 +594,8 @@
   }
 
   function setButtonLoading(button, loadingText, isLoading) {
+    if (!button) return;
+
     if (!button.dataset.originalText) {
       button.dataset.originalText = button.textContent;
     }
@@ -598,6 +648,59 @@
       .filter(Boolean);
   }
 
+  function getQualificationStats(replies) {
+    const blacklist = parseBlacklist();
+    const keywords = getKeywordList();
+
+    let blacklistRemoved = 0;
+    let emptyRemoved = 0;
+    let tagRemoved = 0;
+    let keywordRemoved = 0;
+
+    const filtered = replies.filter(reply => {
+      const username = String(reply.username || "").toLowerCase();
+      const text = String(reply.text || "").trim();
+      const textLower = text.toLowerCase();
+
+      if (blacklist.includes(username)) {
+        blacklistRemoved += 1;
+        return false;
+      }
+
+      if (excludeEmptyCheckbox.checked && !text) {
+        emptyRemoved += 1;
+        return false;
+      }
+
+      if (mustTagCheckbox.checked && !hasTag(text)) {
+        tagRemoved += 1;
+        return false;
+      }
+
+      if (keywords.length > 0 && !keywords.some(k => textLower.includes(k))) {
+        keywordRemoved += 1;
+        return false;
+      }
+
+      return true;
+    });
+
+    const usernames = filtered.map(r => r.username).filter(Boolean);
+    const uniqueUsers = [...new Set(usernames)];
+
+    return {
+      rawCount: replies.length,
+      filteredCount: filtered.length,
+      uniqueCount: uniqueUsers.length,
+      blacklistRemoved,
+      emptyRemoved,
+      tagRemoved,
+      keywordRemoved,
+      blacklistCount: blacklist.length,
+      keywordCount: keywords.length
+    };
+  }
+
   function applyFilters(replies) {
     const blacklist = parseBlacklist();
     const keywords = getKeywordList();
@@ -621,6 +724,27 @@
     replyCountPill.textContent = `留言數：${allReplies.length}`;
     eligibleCountPill.textContent = `符合條件：${eligibleReplies.length}`;
     uniqueCountPill.textContent = `去重後人數：${uniqueUsers.length}`;
+  }
+
+  function renderQualificationSummary() {
+    if (!currentReplies.length) {
+      qualificationSummaryBox.innerHTML = `<div class="muted">請先載入留言</div>`;
+      return;
+    }
+
+    const stats = getQualificationStats(currentReplies);
+
+    qualificationSummaryBox.innerHTML = `
+      <ul class="summary-list">
+        <li>原始留言數：<strong>${stats.rawCount}</strong></li>
+        <li>排除黑名單：<strong>${stats.blacklistRemoved}</strong>（黑名單共 ${stats.blacklistCount} 個）</li>
+        <li>排除空白留言：<strong>${stats.emptyRemoved}</strong></li>
+        <li>排除未含 @tag：<strong>${stats.tagRemoved}</strong></li>
+        <li>排除未符合關鍵字：<strong>${stats.keywordRemoved}</strong>（關鍵字共 ${stats.keywordCount} 個）</li>
+        <li>符合條件留言：<strong>${stats.filteredCount}</strong></li>
+        <li>去重後人數：<strong>${stats.uniqueCount}</strong></li>
+      </ul>
+    `;
   }
 
   function renderPostSelect(posts) {
@@ -665,6 +789,7 @@
 
     const loadRepliesBtn = document.getElementById("loadRepliesBtn");
     loadRepliesBtn.onclick = () => loadReplies(post.id);
+
     if (isLoadingReplies) {
       setButtonLoading(loadRepliesBtn, "載入留言中...", true);
     }
@@ -688,29 +813,6 @@
     `;
   }
 
-  function renderDebugLogs() {
-    if (!paginationDebugLogs.length) {
-      debugBox.innerHTML = `<div class="muted">尚未載入留言</div>`;
-      return;
-    }
-
-    debugBox.innerHTML = `
-      <ol class="debug-list">
-        ${paginationDebugLogs.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-      </ol>
-    `;
-  }
-
-  function resetDebugLogs() {
-    paginationDebugLogs = [];
-    renderDebugLogs();
-  }
-
-  function pushDebugLog(message) {
-    paginationDebugLogs.push(message);
-    renderDebugLogs();
-  }
-
   function renderWinners(winners) {
     if (!winners.length) {
       winnerBox.innerHTML = `<div class="muted">沒有抽出中獎者</div>`;
@@ -729,16 +831,40 @@
     const keywordText = keywordInput.value.trim() || "無";
     const mustTagText = mustTagCheckbox.checked ? "是" : "否";
     const dedupeText = dedupeCheckbox.checked ? "是" : "否";
+    const excludePrevText = excludePreviousWinnersCheckbox.checked ? "是" : "否";
 
     resultCard.innerHTML = `
       <div><strong>抽獎結果</strong></div>
       <div class="tiny" style="margin-top:6px;">貼文：${escapeHtml(postPreview)}</div>
       <div class="tiny">時間：${escapeHtml(formatDate(new Date().toISOString()))}</div>
-      <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重=${dedupeText}</div>
+      <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重=${dedupeText}｜重抽排除已中獎=${excludePrevText}</div>
       <div style="margin-top:10px;"><strong>中獎名單：</strong>${winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
       <div class="tiny" style="margin-top:8px;">由 Threads 抽獎工具產生</div>
     `;
     resultCard.classList.remove("hidden");
+  }
+
+  function buildAnnouncementText() {
+    if (!lastWinners.length) {
+      return "";
+    }
+
+    const postPreview = (selectedPost?.text || "（沒有文字內容）").slice(0, 40);
+    const keywordText = keywordInput.value.trim() || "無";
+    const mustTagText = mustTagCheckbox.checked ? "是" : "否";
+    const dedupeText = dedupeCheckbox.checked ? "是" : "否";
+
+    return [
+      "抽獎完成 🎉",
+      `貼文：${postPreview}`,
+      "",
+      "中獎名單如下：",
+      ...lastWinners.map((name, i) => `${i + 1}. @${name}`),
+      "",
+      `條件：關鍵字=${keywordText} / 需Tag=${mustTagText} / 去重=${dedupeText}`,
+      "感謝大家參與！",
+      "由 Threads 抽獎工具產生"
+    ].join("\n");
   }
 
   function openResultModal(winners) {
@@ -765,15 +891,48 @@
     resultModal.setAttribute("aria-hidden", "true");
   }
 
+  function getHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveHistoryEntry(entry) {
+    const history = getHistory();
+    history.unshift(entry);
+    const sliced = history.slice(0, 10);
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(sliced));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const history = getHistory();
+
+    if (!history.length) {
+      historyBox.innerHTML = `<div class="muted">目前沒有抽獎紀錄</div>`;
+      return;
+    }
+
+    historyBox.innerHTML = history.map(item => `
+      <div class="history-card">
+        <div class="history-meta">${escapeHtml(item.time)}</div>
+        <div class="history-title">${escapeHtml(item.postPreview)}</div>
+        <div class="tiny">條件：關鍵字=${escapeHtml(item.keywordText)}｜需Tag=${escapeHtml(item.mustTagText)}｜去重=${escapeHtml(item.dedupeText)}｜排除已中獎=${escapeHtml(item.excludePrevText)}</div>
+        <div style="margin-top:8px;"><strong>中獎者：</strong>${item.winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
+      </div>
+    `).join("");
+  }
+
   async function getAllPosts() {
     const fields = "id,text,username,permalink,media_type,media_url,timestamp,shortcode,is_pinned,pinned";
     let after = "";
     let allPosts = [];
-    let page = 0;
 
     while (true) {
-      page += 1;
-      setStatus(`正在讀取貼文... 第 ${page} 頁，目前已抓到 ${allPosts.length} 篇`);
+      setStatus(`正在讀取貼文... 目前已抓到 ${allPosts.length} 篇`);
 
       const path = after
         ? `me/threads?fields=${fields}&after=${encodeURIComponent(after)}`
@@ -813,62 +972,46 @@
   async function getAllReplies(postId) {
     const fields = "id,text,username,media_type,timestamp,permalink";
     let after = "";
-    let page = 0;
     let allReplies = [];
     let estimatedTotal = null;
-    let estimatedPages = null;
 
     const detail = await getPostDetail(postId);
     if (detail && typeof detail.reply_count === "number") {
       estimatedTotal = detail.reply_count;
-      estimatedPages = Math.max(1, Math.ceil(estimatedTotal / 25));
     }
 
     const seenReplyIds = new Set();
-    const seenCursors = new Set();
+    let emptyPageCount = 0;
 
     while (true) {
-      page += 1;
-
-      if (after) {
-        if (seenCursors.has(after)) {
-          pushDebugLog(`第 ${page} 頁：偵測到重複 cursor，提前停止。cursor=${after}`);
-          break;
-        }
-        seenCursors.add(after);
-      }
-
-      if (estimatedPages) {
-        setStatus(`正在載入留言... 第 ${page}/${estimatedPages} 頁，已抓到 ${allReplies.length} 則`);
-      } else {
-        setStatus(`正在載入留言... 第 ${page} 頁，已抓到 ${allReplies.length} 則`);
-      }
+      setStatus(`正在載入留言... 目前已抓到 ${allReplies.length} 則`);
 
       const path = after
-        ? `${postId}/replies?fields=${fields}&after=${encodeURIComponent(after)}`
-        : `${postId}/replies?fields=${fields}`;
+        ? `${postId}/replies?fields=${fields}&after=${encodeURIComponent(after)}&limit=100`
+        : `${postId}/replies?fields=${fields}&limit=100`;
 
       const data = await proxyGet(path);
       const batch = Array.isArray(data.data) ? data.data : [];
-      let duplicateInThisPage = 0;
 
       for (const item of batch) {
         if (!item?.id) continue;
-        if (seenReplyIds.has(item.id)) {
-          duplicateInThisPage += 1;
-          continue;
-        }
+        if (seenReplyIds.has(item.id)) continue;
         seenReplyIds.add(item.id);
         allReplies.push(item);
       }
 
       const nextAfter = data?.paging?.cursors?.after || null;
 
-      pushDebugLog(
-        `第 ${page} 頁：API回傳 ${batch.length} 筆，新增 ${batch.length - duplicateInThisPage} 筆，重複 ${duplicateInThisPage} 筆，累計 ${allReplies.length} 筆，nextAfter=${nextAfter ? "有" : "無"}`
-      );
+      if (batch.length === 0) {
+        emptyPageCount += 1;
+        if (emptyPageCount >= 2) {
+          break;
+        }
+      } else {
+        emptyPageCount = 0;
+      }
 
-      if (!nextAfter || batch.length === 0) {
+      if (!nextAfter) {
         break;
       }
 
@@ -877,30 +1020,39 @@
 
     return {
       replies: allReplies,
-      estimatedTotal,
-      estimatedPages
+      estimatedTotal
     };
   }
 
-  function buildPool(shouldRender = true) {
+  function buildPool(shouldRender = true, excludePreviousWinners = false) {
     currentEligibleReplies = applyFilters(currentReplies);
 
     if (shouldRender) {
       updateCounts(currentReplies, currentEligibleReplies);
       renderReplyList(currentEligibleReplies);
+      renderQualificationSummary();
     }
+
+    let pool = [];
 
     if (dedupeCheckbox.checked) {
-      return [...new Set(currentEligibleReplies.map(r => r.username).filter(Boolean))];
+      pool = [...new Set(currentEligibleReplies.map(r => r.username).filter(Boolean))];
+    } else {
+      pool = currentEligibleReplies.map(r => r.username).filter(Boolean);
     }
 
-    return currentEligibleReplies.map(r => r.username).filter(Boolean);
+    if (excludePreviousWinners) {
+      pool = pool.filter(username => !currentRoundWinnerSet.has(username));
+    }
+
+    return pool;
   }
 
   async function runDrawAnimation() {
     drawBtn.disabled = true;
     redrawBtn.disabled = true;
     copyWinnersBtn.disabled = true;
+    copyAnnouncementBtn.disabled = true;
 
     const steps = ["抽獎中.", "抽獎中..", "抽獎中..."];
     for (let i = 0; i < 7; i++) {
@@ -911,6 +1063,7 @@
     drawBtn.disabled = false;
     redrawBtn.disabled = false;
     copyWinnersBtn.disabled = false;
+    copyAnnouncementBtn.disabled = false;
   }
 
   async function drawWinners(isRedraw = false) {
@@ -934,7 +1087,11 @@
     setButtonLoading(clickedBtn, isRedraw ? "重抽中..." : "抽獎中...", true);
 
     try {
-      const pool = buildPool(true);
+      if (!isRedraw) {
+        currentRoundWinnerSet = new Set();
+      }
+
+      const pool = buildPool(true, isRedraw && excludePreviousWinnersCheckbox.checked);
 
       if (!pool.length) {
         setStatus("符合條件的名單為空，無法抽獎");
@@ -946,8 +1103,25 @@
 
       const winners = shuffle(pool).slice(0, Math.min(winnerCount, pool.length));
       lastWinners = winners;
+      winners.forEach(name => currentRoundWinnerSet.add(name));
+
       renderWinners(winners);
       openResultModal(winners);
+
+      const keywordText = keywordInput.value.trim() || "無";
+      const mustTagText = mustTagCheckbox.checked ? "是" : "否";
+      const dedupeText = dedupeCheckbox.checked ? "是" : "否";
+      const excludePrevText = excludePreviousWinnersCheckbox.checked ? "是" : "否";
+
+      saveHistoryEntry({
+        time: formatDate(new Date().toISOString()),
+        postPreview: (selectedPost.text || "（沒有文字內容）").slice(0, 50),
+        keywordText,
+        mustTagText,
+        dedupeText,
+        excludePrevText,
+        winners
+      });
 
       setStatus(
         `${isRedraw ? "重抽完成" : "抽獎完成"}\n` +
@@ -976,18 +1150,35 @@
     }
   }
 
+  async function copyAnnouncement() {
+    const text = buildAnnouncementText();
+
+    if (!text) {
+      setStatus("目前沒有可複製的公告文案");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setStatus("已複製公告文案");
+    } catch {
+      setStatus("複製公告文案失敗，可能是瀏覽器權限限制");
+    }
+  }
+
   window.selectPost = function(postId) {
     selectedPost = postsData.find(p => p.id === postId) || null;
     currentReplies = [];
     currentEligibleReplies = [];
     lastWinners = [];
     lastEstimatedReplyCount = null;
+    currentRoundWinnerSet = new Set();
 
     renderReplyList([]);
     renderWinners([]);
     updateCounts([], []);
     showEstimatedReplyCount(null);
-    resetDebugLogs();
+    renderQualificationSummary();
 
     if (!selectedPost) {
       selectedPostTitle.textContent = "尚未選擇貼文";
@@ -997,7 +1188,7 @@
 
     selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
     renderPostPreview(selectedPost);
-    setStatus("已選擇貼文，可載入留言");
+    setStatus("已選擇貼文，下一步請按「載入留言」，再開始抽獎");
   };
 
   async function loadReplies(postId) {
@@ -1010,9 +1201,6 @@
 
       isLoadingReplies = true;
       renderPostPreview(selectedPost);
-      resetDebugLogs();
-      setButtonLoading(drawBtn, "抽獎中...", false);
-      setButtonLoading(redrawBtn, "重抽中...", false);
 
       const loadRepliesBtn = document.getElementById("loadRepliesBtn");
       if (loadRepliesBtn) {
@@ -1029,8 +1217,9 @@
       updateCounts(currentReplies, currentEligibleReplies);
       renderReplyList(currentEligibleReplies);
       renderWinners([]);
+      renderQualificationSummary();
 
-      if (selectedPost && lastEstimatedReplyCount !== null) {
+      if (selectedPost) {
         renderPostPreview(selectedPost);
       }
 
@@ -1038,7 +1227,7 @@
         ? `（預估總留言 ${lastEstimatedReplyCount}）`
         : "";
 
-      setStatus(`已載入留言，共 ${currentReplies.length} 則 ${totalText}`);
+      setStatus(`已載入 API 可取得留言，共 ${currentReplies.length} 則 ${totalText}`);
     } catch (err) {
       setStatus("載入留言失敗：" + err.message);
     } finally {
@@ -1049,7 +1238,7 @@
 
   function refreshFilteredReplies() {
     if (!currentReplies.length) return;
-    buildPool(true);
+    buildPool(true, false);
   }
 
   function init() {
@@ -1059,19 +1248,11 @@
     } else {
       setStatus("尚未登入，請先登入 Threads");
     }
+    renderHistory();
   }
 
   document.getElementById("loginBtn").onclick = () => {
     window.location.href = buildLoginUrl();
-  };
-
-  document.getElementById("showTokenBtn").onclick = () => {
-    const token = getToken();
-    if (token) {
-      setStatus("目前已登入，token 已存在瀏覽器");
-    } else {
-      setStatus("目前沒有 token，請先登入");
-    }
   };
 
   document.getElementById("logoutBtn").onclick = () => {
@@ -1082,6 +1263,7 @@
     currentEligibleReplies = [];
     lastWinners = [];
     lastEstimatedReplyCount = null;
+    currentRoundWinnerSet = new Set();
     isLoadingReplies = false;
 
     postSelect.innerHTML = `<option value="">請先讀取貼文</option>`;
@@ -1090,22 +1272,23 @@
     winnerBox.innerHTML = `<div class="muted">尚未抽獎</div>`;
     resultCard.classList.add("hidden");
     resultCard.innerHTML = "";
+    qualificationSummaryBox.innerHTML = `<div class="muted">請先載入留言</div>`;
     selectedPostTitle.textContent = "尚未選擇貼文";
     updateCounts([], []);
     showEstimatedReplyCount(null);
-    resetDebugLogs();
     closeResultModal();
-    setStatus("已清除登入");
+    setStatus("已登出");
   };
 
   document.getElementById("getPostsBtn").onclick = async () => {
+    const btn = document.getElementById("getPostsBtn");
     try {
-      setButtonLoading(document.getElementById("getPostsBtn"), "讀取中...", true);
+      setButtonLoading(btn, "讀取中...", true);
       await getPosts();
     } catch (err) {
       setStatus("讀取貼文失敗：" + err.message);
     } finally {
-      setButtonLoading(document.getElementById("getPostsBtn"), "讀取中...", false);
+      setButtonLoading(btn, "讀取中...", false);
     }
   };
 
@@ -1121,7 +1304,9 @@
   drawBtn.onclick = () => drawWinners(false);
   redrawBtn.onclick = () => drawWinners(true);
   copyWinnersBtn.onclick = copyWinners;
+  copyAnnouncementBtn.onclick = copyAnnouncement;
   modalCopyBtn.onclick = copyWinners;
+  modalAnnouncementBtn.onclick = copyAnnouncement;
   modalCloseBtn.onclick = closeResultModal;
 
   resultModal.addEventListener("click", (e) => {
