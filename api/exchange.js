@@ -1,4 +1,14 @@
 export default async function handler(req, res) {
+  // 允許你的 GitHub Pages 網址跨域呼叫
+  res.setHeader("Access-Control-Allow-Origin", "https://lanternyobox-glitch.github.io");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // 瀏覽器 preflight 請求
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
