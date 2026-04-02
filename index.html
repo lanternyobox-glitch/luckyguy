@@ -410,7 +410,7 @@
           <select id="postSelect">
             <option value="">請先登入並等待系統自動載入貼文</option>
           </select>
-          <div class="tiny">已登入後會自動讀取貼文，默認按照時間排序</div>
+          <div class="tiny">已登入後會自動讀取貼文，選擇貼文後也會自動載入留言</div>
         </div>
 
         <div id="postPreviewBox" class="side-box">
@@ -482,7 +482,7 @@
 
       <div class="side-box">
         <h3 style="margin-bottom:10px;">留言名單</h3>
-        <div id="replyListBox" class="muted">請先選擇貼文並載入留言</div>
+        <div id="replyListBox" class="muted">請先選擇貼文</div>
       </div>
 
       <div class="winner-box">
@@ -497,6 +497,7 @@
           <li>抽獎結果以 Threads API 可取得的留言資料為準。</li>
           <li>平台可能因隱私、違規、屏蔽或可見性規則，導致部分留言無法被工具讀取。</li>
           <li>本工具只讀取資料，不會修改你的貼文或留言。</li>
+          <li>選擇貼文後會自動載入留言，若留言較多請稍候。</li>
           <li>若使用重抽且勾選排除已中獎者，會從本次已載入的有效總留言排除已中獎者。</li>
         </ul>
       </div>
@@ -920,16 +921,8 @@
       </div>
       <div class="toolbar" style="margin-top:12px;">
         <a class="button-link btn-secondary" href="${escapeHtml(post.permalink || "#")}" target="_blank">開啟原文</a>
-        <button id="loadRepliesBtn" class="btn-secondary">載入留言</button>
       </div>
     `;
-
-    const loadRepliesBtn = document.getElementById("loadRepliesBtn");
-    loadRepliesBtn.onclick = () => loadReplies(post.id);
-
-    if (isLoadingReplies) {
-      setButtonLoading(loadRepliesBtn, "到底誰會中獎呢...", true);
-    }
   }
 
   function renderReplyList(replies) {
@@ -1263,7 +1256,7 @@
     }
 
     if (!currentReplies.length) {
-      setStatus("請先載入這篇貼文的留言");
+      setStatus("請先等待系統載入這篇貼文的留言");
       return;
     }
 
@@ -1356,8 +1349,7 @@
     }
   }
 
-  window.selectPost = function(postId) {
-    selectedPost = postsData.find(p => p.id === postId) || null;
+  function resetRepliesState() {
     currentReplies = [];
     currentEligibleReplies = [];
     lastWinners = [];
@@ -1369,33 +1361,43 @@
     updateCounts([], []);
     showEstimatedReplyCount(null);
     renderQualificationSummary();
+  }
+
+  async function selectPostAndLoad(postId) {
+    selectedPost = postsData.find(p => p.id === postId) || null;
+    resetRepliesState();
 
     if (!selectedPost) {
       selectedPostTitle.textContent = "尚未選擇貼文";
       renderPostPreview(null);
+      setStatus("請先選擇一篇貼文");
       return;
     }
 
     selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
     renderPostPreview(selectedPost);
-    setStatus("已選擇貼文，下一步請按「載入留言」，再開始抽獎");
-  };
+    replyListBox.innerHTML = `<div class="muted">正在自動載入留言...</div>`;
+    qualificationSummaryBox.innerHTML = `<div class="muted">正在整理資格摘要...</div>`;
+
+    await loadReplies(selectedPost.id);
+  }
 
   async function loadReplies(postId) {
     if (isLoadingReplies) return;
 
     try {
-      if (!selectedPost || selectedPost.id !== postId) {
-        window.selectPost(postId);
-      }
-
       isLoadingReplies = true;
-      renderPostPreview(selectedPost);
 
-      const loadRepliesBtn = document.getElementById("loadRepliesBtn");
-      if (loadRepliesBtn) {
-        setButtonLoading(loadRepliesBtn, "載入留言中...", true);
+      if (!selectedPost || selectedPost.id !== postId) {
+        selectedPost = postsData.find(p => p.id === postId) || null;
+        if (selectedPost) {
+          selectedPostTitle.textContent = `目前選擇：${(selectedPost.text || "（沒有文字內容）").slice(0, 60)}`;
+          renderPostPreview(selectedPost);
+        }
       }
+
+      const previewText = (selectedPost?.text || "（沒有文字內容）").slice(0, 30);
+      setStatus(`正在自動載入留言...\n貼文：${previewText}`);
 
       const result = await getAllReplies(postId);
 
@@ -1417,12 +1419,13 @@
         ? `（預估總留言 ${lastEstimatedReplyCount}）`
         : "";
 
-      setStatus(`已載入成功可取得留言，共 ${currentReplies.length} 則 ${totalText}`);
+      setStatus(`已自動載入留言，共 ${currentReplies.length} 則 ${totalText}`);
     } catch (err) {
       setStatus("載入留言失敗：" + err.message);
+      replyListBox.innerHTML = `<div class="muted">載入留言失敗</div>`;
+      qualificationSummaryBox.innerHTML = `<div class="muted">載入資格摘要失敗</div>`;
     } finally {
       isLoadingReplies = false;
-      renderPostPreview(selectedPost);
     }
   }
 
@@ -1444,7 +1447,7 @@
 
     postSelect.innerHTML = `<option value="">請先登入並等待系統自動載入貼文</option>`;
     postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
-    replyListBox.innerHTML = `<div class="muted">請先選擇貼文並載入留言</div>`;
+    replyListBox.innerHTML = `<div class="muted">請先選擇貼文</div>`;
     winnerBox.innerHTML = `<div class="muted">尚未抽獎</div>`;
     resultCard.classList.add("hidden");
     resultCard.innerHTML = "";
@@ -1511,13 +1514,18 @@
     setStatus("已登出");
   };
 
-  postSelect.addEventListener("change", (e) => {
+  postSelect.addEventListener("change", async (e) => {
     const postId = e.target.value;
     if (!postId) {
-      window.selectPost("");
+      selectedPost = null;
+      resetRepliesState();
+      selectedPostTitle.textContent = "尚未選擇貼文";
+      renderPostPreview(null);
+      setStatus("請先選擇一篇貼文");
       return;
     }
-    window.selectPost(postId);
+
+    await selectPostAndLoad(postId);
   });
 
   drawBtn.onclick = () => drawWinners(false);
