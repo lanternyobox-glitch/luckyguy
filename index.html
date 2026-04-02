@@ -602,7 +602,7 @@
   async function proxyGet(path) {
     const token = getToken();
     if (!token) {
-      throw new Error("沒有 token，請先登入");
+      throw new Error("請先登入");
     }
 
     const res = await fetch(`${API_BASE}/api/proxy`, {
