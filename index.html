@@ -420,7 +420,7 @@
 
       <div class="panel">
         <h2>抽獎紀錄</h2>
-        <div id="historyBox" class="muted">目前沒有抽獎紀錄</div>
+        <div id="historyBox" class="muted">登入後才會顯示此帳號的抽獎紀錄</div>
       </div>
     </div>
 
@@ -539,7 +539,7 @@
   const SCOPE = "threads_basic,threads_read_replies";
   const AUTH_URL = "https://threads.net/oauth/authorize";
   const API_BASE = "https://luckyguy.vercel.app";
-  const HISTORY_STORAGE_KEY = "threads_lucky_draw_history_v1";
+  const HISTORY_STORAGE_PREFIX = "threads_lucky_draw_history_v2_";
   const TOKEN_STORAGE_KEY = "threads_token";
   const USERNAME_STORAGE_KEY = "threads_username";
   const USER_ID_STORAGE_KEY = "threads_user_id";
@@ -625,6 +625,12 @@
     localStorage.removeItem(USER_ID_STORAGE_KEY);
   }
 
+  function getHistoryStorageKey() {
+    const username = getStoredUsername();
+    if (!username) return null;
+    return `${HISTORY_STORAGE_PREFIX}${username.toLowerCase()}`;
+  }
+
   function updateAuthUI(username = "") {
     if (username) {
       loginBtn.textContent = `@${username} 已登入`;
@@ -687,6 +693,7 @@
         username: me.username
       });
       updateAuthUI(me.username);
+      renderHistory();
     }
     return me;
   }
@@ -1038,8 +1045,11 @@
   }
 
   function getHistory() {
+    const historyKey = getHistoryStorageKey();
+    if (!historyKey) return [];
+
     try {
-      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      const raw = localStorage.getItem(historyKey);
       return raw ? JSON.parse(raw) : [];
     } catch {
       return [];
@@ -1047,18 +1057,28 @@
   }
 
   function saveHistoryEntry(entry) {
+    const historyKey = getHistoryStorageKey();
+    if (!historyKey) return;
+
     const history = getHistory();
     history.unshift(entry);
     const sliced = history.slice(0, 10);
-    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(sliced));
+    localStorage.setItem(historyKey, JSON.stringify(sliced));
     renderHistory();
   }
 
   function renderHistory() {
+    const username = getStoredUsername();
+
+    if (!username) {
+      historyBox.innerHTML = `<div class="muted">登入後才會顯示此帳號的抽獎紀錄</div>`;
+      return;
+    }
+
     const history = getHistory();
 
     if (!history.length) {
-      historyBox.innerHTML = `<div class="muted">目前沒有抽獎紀錄</div>`;
+      historyBox.innerHTML = `<div class="muted">@${escapeHtml(username)} 目前沒有抽獎紀錄</div>`;
       return;
     }
 
@@ -1434,6 +1454,7 @@
     showEstimatedReplyCount(null);
     closeResultModal();
     closeDonateModal();
+    renderHistory();
   }
 
   async function init() {
@@ -1455,11 +1476,13 @@
     try {
       if (storedUsername) {
         updateAuthUI(storedUsername);
+        renderHistory();
         setStatus(`@${storedUsername} 已登入，正在自動載入貼文...`);
       } else {
         setStatus("已偵測到登入資料，正在讀取帳號資訊...");
         const me = await fetchAndStoreProfile();
         if (me?.username) {
+          renderHistory();
           setStatus(`@${me.username} 已登入，正在自動載入貼文...`);
         } else {
           updateAuthUI("");
