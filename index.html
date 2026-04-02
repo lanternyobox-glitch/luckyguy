@@ -392,7 +392,7 @@
     <div class="toolbar">
       <button id="loginBtn" class="btn-primary">登入 Threads</button>
       <button id="getPostsBtn" class="btn-secondary">載入我的貼文</button>
-      <button id="logoutBtn" class="btn-secondary">登出</button>
+      <button id="logoutBtn" class="btn-secondary hidden">登出</button>
     </div>
   </div>
 
@@ -626,19 +626,21 @@
     localStorage.removeItem(USER_ID_STORAGE_KEY);
   }
 
-  function updateLoginButton(username = "") {
+  function updateAuthUI(username = "") {
     if (username) {
       loginBtn.textContent = `@${username} 已登入`;
       loginBtn.disabled = true;
       loginBtn.classList.remove("btn-primary");
       loginBtn.classList.add("btn-secondary");
       loginBtn.title = `目前登入帳號：@${username}`;
+      logoutBtn.classList.remove("hidden");
     } else {
       loginBtn.textContent = "登入 Threads";
       loginBtn.disabled = false;
       loginBtn.classList.remove("btn-secondary");
       loginBtn.classList.add("btn-primary");
       loginBtn.title = "";
+      logoutBtn.classList.add("hidden");
     }
   }
 
@@ -685,7 +687,7 @@
         id: me.id || "",
         username: me.username
       });
-      updateLoginButton(me.username);
+      updateAuthUI(me.username);
     }
     return me;
   }
@@ -1421,13 +1423,13 @@
     renderHistory();
 
     if (!token) {
-      updateLoginButton("");
+      updateAuthUI("");
       setStatus("尚未登入，請先登入 Threads");
       return;
     }
 
     if (storedUsername) {
-      updateLoginButton(storedUsername);
+      updateAuthUI(storedUsername);
       setStatus(`@${storedUsername} 已登入，可先讀取貼文`);
       return;
     }
@@ -1437,11 +1439,11 @@
       if (me?.username) {
         setStatus(`@${me.username} 已登入，可先讀取貼文`);
       } else {
-        updateLoginButton("");
+        updateAuthUI("");
         setStatus("已登入，但尚未取得帳號資訊");
       }
     } catch (err) {
-      updateLoginButton("");
+      updateAuthUI("");
       setStatus("已偵測到登入資料，但讀取帳號資訊失敗：" + err.message);
     }
   }
@@ -1454,7 +1456,7 @@
   logoutBtn.onclick = () => {
     clearToken();
     clearStoredUser();
-    updateLoginButton("");
+    updateAuthUI("");
     resetUiAfterLogout();
     setStatus("已登出");
   };
