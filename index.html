@@ -357,6 +357,19 @@
       color: #666;
       margin-top: 8px;
     }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .footer-links a,
+    .footer-links span {
+      color: #666;
+      margin: 0 4px;
+    }
   </style>
 </head>
 <body>
@@ -507,7 +520,7 @@
   <div id="donateModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal-card">
       <div class="modal-title">支持本創作</div>
-      <div class="modal-sub">這是免費工具！如果這個工具有幫到你，歡迎小額支持創作! </div>
+      <div class="modal-sub">這是免費工具！如果這個工具有幫到你，歡迎小額支持創作！</div>
 
       <div class="donate-modal-box">
         <div><strong>支持方式：</strong>加入 LINE 好友後使用 LINE Pay 轉帳</div>
@@ -528,6 +541,9 @@
   const AUTH_URL = "https://threads.net/oauth/authorize";
   const API_BASE = "https://luckyguy.vercel.app";
   const HISTORY_STORAGE_KEY = "threads_lucky_draw_history_v1";
+  const TOKEN_STORAGE_KEY = "threads_token";
+  const USERNAME_STORAGE_KEY = "threads_username";
+  const USER_ID_STORAGE_KEY = "threads_user_id";
 
   const DONATE_LINE_URL = "https://line.me/ti/p/BOP26hK4Cv";
 
@@ -555,6 +571,9 @@
   const copyAnnouncementBtn = document.getElementById("copyAnnouncementBtn");
   const qualificationSummaryBox = document.getElementById("qualificationSummaryBox");
   const historyBox = document.getElementById("historyBox");
+  const loginBtn = document.getElementById("loginBtn");
+  const getPostsBtn = document.getElementById("getPostsBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
   const resultModal = document.getElementById("resultModal");
   const modalSub = document.getElementById("modalSub");
@@ -582,11 +601,45 @@
   }
 
   function getToken() {
-    return localStorage.getItem("threads_token");
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
   }
 
   function clearToken() {
-    localStorage.removeItem("threads_token");
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
+
+  function getStoredUsername() {
+    return localStorage.getItem(USERNAME_STORAGE_KEY);
+  }
+
+  function setStoredUser(user = {}) {
+    if (user.username) {
+      localStorage.setItem(USERNAME_STORAGE_KEY, user.username);
+    }
+    if (user.id) {
+      localStorage.setItem(USER_ID_STORAGE_KEY, user.id);
+    }
+  }
+
+  function clearStoredUser() {
+    localStorage.removeItem(USERNAME_STORAGE_KEY);
+    localStorage.removeItem(USER_ID_STORAGE_KEY);
+  }
+
+  function updateLoginButton(username = "") {
+    if (username) {
+      loginBtn.textContent = `@${username} 已登入`;
+      loginBtn.disabled = true;
+      loginBtn.classList.remove("btn-primary");
+      loginBtn.classList.add("btn-secondary");
+      loginBtn.title = `目前登入帳號：@${username}`;
+    } else {
+      loginBtn.textContent = "登入 Threads";
+      loginBtn.disabled = false;
+      loginBtn.classList.remove("btn-secondary");
+      loginBtn.classList.add("btn-primary");
+      loginBtn.title = "";
+    }
   }
 
   function buildLoginUrl() {
@@ -620,6 +673,21 @@
     }
 
     return data;
+  }
+
+  async function fetchAndStoreProfile() {
+    const token = getToken();
+    if (!token) return null;
+
+    const me = await proxyGet("me?fields=id,username");
+    if (me?.username) {
+      setStoredUser({
+        id: me.id || "",
+        username: me.username
+      });
+      updateLoginButton(me.username);
+    }
+    return me;
   }
 
   function escapeHtml(str) {
@@ -784,7 +852,7 @@
     const uniqueUsers = [...new Set(eligibleReplies.map(r => r.username).filter(Boolean))];
     replyCountPill.textContent = `留言數：${allReplies.length}`;
     eligibleCountPill.textContent = `符合條件：${eligibleReplies.length}`;
-    uniqueCountPill.textContent = `去重後人數：${uniqueUsers.length}`;
+    uniqueCountPill.textContent = `去重複人數：${uniqueUsers.length}`;
   }
 
   function renderQualificationSummary() {
@@ -900,7 +968,7 @@
       <div class="tiny">時間：${escapeHtml(formatDate(new Date().toISOString()))}</div>
       <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重複=${dedupeText}｜重抽排除已中獎=${excludePrevText}</div>
       <div style="margin-top:10px;"><strong>中獎名單：</strong>${winners.map(w => `@${escapeHtml(w)}`).join("、")}</div>
-      <div class="tiny" style="margin-top:8px;">本Threads抽獎工具由 @lt_letsgo_ 製作</div>
+      <div class="tiny" style="margin-top:8px;">本 Threads 抽獎工具由 @lt_letsgo_ 製作</div>
     `;
     resultCard.classList.remove("hidden");
   }
@@ -1304,7 +1372,7 @@
         ? `（預估總留言 ${lastEstimatedReplyCount}）`
         : "";
 
-      setStatus(`已載入成功 可取得留言，共 ${currentReplies.length} 則 ${totalText}`);
+      setStatus(`已載入成功可取得留言，共 ${currentReplies.length} 則 ${totalText}`);
     } catch (err) {
       setStatus("載入留言失敗：" + err.message);
     } finally {
@@ -1318,27 +1386,7 @@
     buildPool(true, false);
   }
 
-  function init() {
-    const token = getToken();
-    if (token) {
-      setStatus("已登入，可先讀取貼文");
-    } else {
-      setStatus("尚未登入，請先登入 Threads");
-    }
-
-    donateLineLinkBtn.href = DONATE_LINE_URL && DONATE_LINE_URL !== "YOUR_LINE_FRIEND_LINK"
-      ? DONATE_LINE_URL
-      : "#";
-
-    renderHistory();
-  }
-
-  document.getElementById("loginBtn").onclick = () => {
-    window.location.href = buildLoginUrl();
-  };
-
-  document.getElementById("logoutBtn").onclick = () => {
-    clearToken();
+  function resetUiAfterLogout() {
     postsData = [];
     selectedPost = null;
     currentReplies = [];
@@ -1360,13 +1408,70 @@
     showEstimatedReplyCount(null);
     closeResultModal();
     closeDonateModal();
+  }
+
+  async function init() {
+    const token = getToken();
+    const storedUsername = getStoredUsername();
+
+    donateLineLinkBtn.href = DONATE_LINE_URL && DONATE_LINE_URL !== "YOUR_LINE_FRIEND_LINK"
+      ? DONATE_LINE_URL
+      : "#";
+
+    renderHistory();
+
+    if (!token) {
+      updateLoginButton("");
+      setStatus("尚未登入，請先登入 Threads");
+      return;
+    }
+
+    if (storedUsername) {
+      updateLoginButton(storedUsername);
+      setStatus(`@${storedUsername} 已登入，可先讀取貼文`);
+      return;
+    }
+
+    try {
+      const me = await fetchAndStoreProfile();
+      if (me?.username) {
+        setStatus(`@${me.username} 已登入，可先讀取貼文`);
+      } else {
+        updateLoginButton("");
+        setStatus("已登入，但尚未取得帳號資訊");
+      }
+    } catch (err) {
+      updateLoginButton("");
+      setStatus("已偵測到登入資料，但讀取帳號資訊失敗：" + err.message);
+    }
+  }
+
+  loginBtn.onclick = () => {
+    if (getToken()) return;
+    window.location.href = buildLoginUrl();
+  };
+
+  logoutBtn.onclick = () => {
+    clearToken();
+    clearStoredUser();
+    updateLoginButton("");
+    resetUiAfterLogout();
     setStatus("已登出");
   };
 
-  document.getElementById("getPostsBtn").onclick = async () => {
-    const btn = document.getElementById("getPostsBtn");
+  getPostsBtn.onclick = async () => {
+    const btn = getPostsBtn;
     try {
       setButtonLoading(btn, "讀取中...", true);
+
+      if (!getToken()) {
+        throw new Error("請先登入 Threads");
+      }
+
+      if (!getStoredUsername()) {
+        await fetchAndStoreProfile();
+      }
+
       await getPosts();
     } catch (err) {
       setStatus("讀取貼文失敗：" + err.message);
@@ -1424,17 +1529,12 @@
 
   init();
 </script>
-  
-<div style="
-  text-align:center;
-  margin-top:40px;
-  font-size:13px;
-  color:#666;
-">
-  <a href="privacy.html" target="_blank" style="color:#666;">
-    Privacy Policy | Terms | Contact
-  </a>
+
+<div class="footer-links">
+  <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a> |
+  <a href="privacy.html" target="_blank" rel="noopener noreferrer">Terms</a> |
+  <span>Contact: lanternyobox@gmail.com</span>
 </div>
-  
+
 </body>
 </html>
