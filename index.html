@@ -73,6 +73,21 @@
       gap: 10px;
     }
 
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .status-tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     button,
     .button-link {
       padding: 10px 16px;
@@ -392,11 +407,18 @@
     <div class="toolbar">
       <button id="loginBtn" class="btn-primary">登入 Threads</button>
       <button id="logoutBtn" class="btn-secondary hidden">登出</button>
+      <button id="clearLoginDataBtn" class="btn-danger">清除登入資料</button>
     </div>
   </div>
 
   <div class="panel">
-    <h3>目前狀態</h3>
+    <div class="status-header">
+      <h3 style="margin:0;">目前狀態</h3>
+      <div id="statusTools" class="status-tools hidden">
+        <button id="loadMorePostsBtn" class="btn-secondary">再載入50篇文章</button>
+        <button id="loadAllPostsBtn" class="btn-primary">載入全部文章</button>
+      </div>
+    </div>
     <div id="statusBox" class="status">尚未登入</div>
   </div>
 
@@ -410,7 +432,7 @@
           <select id="postSelect">
             <option value="">請先登入並等待系統自動載入貼文</option>
           </select>
-          <div class="tiny">已登入後會自動讀取貼文，選擇貼文後也會自動載入留言</div>
+          <div class="tiny">已登入後會先自動讀取前 50 篇貼文，選擇貼文後也會自動載入留言</div>
         </div>
 
         <div id="postPreviewBox" class="side-box">
@@ -544,6 +566,7 @@
   const TOKEN_STORAGE_KEY = "threads_token";
   const USERNAME_STORAGE_KEY = "threads_username";
   const USER_ID_STORAGE_KEY = "threads_user_id";
+  const POSTS_BATCH_SIZE = 50;
 
   const DONATE_LINE_URL = "https://line.me/ti/p/BOP26hK4Cv";
 
@@ -573,6 +596,10 @@
   const historyBox = document.getElementById("historyBox");
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
+  const clearLoginDataBtn = document.getElementById("clearLoginDataBtn");
+  const statusTools = document.getElementById("statusTools");
+  const loadMorePostsBtn = document.getElementById("loadMorePostsBtn");
+  const loadAllPostsBtn = document.getElementById("loadAllPostsBtn");
 
   const resultModal = document.getElementById("resultModal");
   const modalSub = document.getElementById("modalSub");
@@ -595,6 +622,9 @@
   let isLoadingReplies = false;
   let isLoadingPosts = false;
   let currentRoundWinnerSet = new Set();
+
+  let postsNextAfter = "";
+  let hasMorePosts = false;
 
   function setStatus(text) {
     statusBox.textContent = text;
@@ -626,10 +656,35 @@
     localStorage.removeItem(USER_ID_STORAGE_KEY);
   }
 
+  function clearLoginData() {
+    clearToken();
+    clearStoredUser();
+  }
+
   function getHistoryStorageKey() {
     const username = getStoredUsername();
     if (!username) return null;
     return `${HISTORY_STORAGE_PREFIX}${username.toLowerCase()}`;
+  }
+
+  function updatePostLoadButtons() {
+    const isLoggedIn = Boolean(getToken());
+    if (isLoggedIn) {
+      statusTools.classList.remove("hidden");
+    } else {
+      statusTools.classList.add("hidden");
+    }
+
+    loadMorePostsBtn.disabled = !isLoggedIn || isLoadingPosts || !hasMorePosts;
+    loadAllPostsBtn.disabled = !isLoggedIn || isLoadingPosts || !hasMorePosts;
+
+    if (!hasMorePosts && isLoggedIn) {
+      loadMorePostsBtn.textContent = "已無更多文章";
+      loadAllPostsBtn.textContent = "已全數載入";
+    } else {
+      loadMorePostsBtn.textContent = "再載入50篇文章";
+      loadAllPostsBtn.textContent = "載入全部文章";
+    }
   }
 
   function updateAuthUI(username = "") {
@@ -648,6 +703,7 @@
       loginBtn.title = "";
       logoutBtn.classList.add("hidden");
     }
+    updatePostLoadButtons();
   }
 
   function buildLoginUrl() {
@@ -768,6 +824,14 @@
     });
   }
 
+  function mergePosts(existingPosts, newPosts) {
+    const map = new Map();
+    [...existingPosts, ...newPosts].forEach(post => {
+      if (post?.id) map.set(post.id, post);
+    });
+    return sortPosts([...map.values()]);
+  }
+
   function parseBlacklist() {
     return blacklistInput.value
       .split("\n")
@@ -885,7 +949,7 @@
     `;
   }
 
-  function renderPostSelect(posts) {
+  function renderPostSelect(posts, selectedId = "") {
     if (!posts.length) {
       postSelect.innerHTML = `<option value="">沒有抓到貼文</option>`;
       return;
@@ -897,7 +961,8 @@
         const isPinned = Boolean(post.is_pinned || post.pinned);
         const prefix = isPinned ? "📌 " : "";
         const label = `${prefix}[${formatDate(post.timestamp)}] ${truncateText(post.text, 42)}`;
-        return `<option value="${escapeHtml(post.id)}">${escapeHtml(label)}</option>`;
+        const isSelected = selectedId && selectedId === post.id ? "selected" : "";
+        return `<option value="${escapeHtml(post.id)}" ${isSelected}>${escapeHtml(label)}</option>`;
       }).join("")}
     `;
   }
@@ -1085,63 +1150,142 @@
     `).join("");
   }
 
-  async function getAllPosts() {
+  async function getPostsPage(after = "") {
     const fields = "id,text,username,permalink,media_type,media_url,timestamp,shortcode,is_pinned,pinned";
-    let after = "";
-    let allPosts = [];
+    const path = after
+      ? `me/threads?fields=${fields}&limit=${POSTS_BATCH_SIZE}&after=${encodeURIComponent(after)}`
+      : `me/threads?fields=${fields}&limit=${POSTS_BATCH_SIZE}`;
 
-    while (true) {
-      setStatus(`正在讀取貼文... 已讀取 ${allPosts.length} 篇`);
+    const data = await proxyGet(path);
+    return {
+      posts: Array.isArray(data.data) ? data.data : [],
+      nextAfter: data?.paging?.cursors?.after || ""
+    };
+  }
 
-      const path = after
-        ? `me/threads?fields=${fields}&after=${encodeURIComponent(after)}`
-        : `me/threads?fields=${fields}`;
+  async function loadPostsBatch({ append = false } = {}) {
+    if (isLoadingPosts) return;
 
-      const data = await proxyGet(path);
-      const batch = Array.isArray(data.data) ? data.data : [];
-      allPosts = allPosts.concat(batch);
+    try {
+      isLoadingPosts = true;
+      updatePostLoadButtons();
 
-      const nextAfter = data?.paging?.cursors?.after;
-      if (!nextAfter || batch.length === 0) {
-        break;
+      const username = getStoredUsername();
+      const currentCount = postsData.length;
+      const loadingText = append
+        ? `@${username || "使用者"} 已登入，正在載入更多貼文...`
+        : `@${username || "使用者"} 已登入，正在載入前 ${POSTS_BATCH_SIZE} 篇貼文...`;
+
+      setStatus(loadingText);
+
+      const result = await getPostsPage(append ? postsNextAfter : "");
+      const newPosts = result.posts || [];
+
+      if (append) {
+        postsData = mergePosts(postsData, newPosts);
+      } else {
+        postsData = sortPosts(newPosts);
       }
 
-      after = nextAfter;
+      postsNextAfter = result.nextAfter || "";
+      hasMorePosts = Boolean(postsNextAfter);
+
+      const selectedId = selectedPost?.id || "";
+      renderPostSelect(postsData, selectedId);
+      if (selectedPost) {
+        selectedPost = postsData.find(p => p.id === selectedId) || selectedPost;
+      }
+
+      if (selectedPost) {
+        renderPostPreview(selectedPost);
+      } else {
+        renderPostPreview(null);
+      }
+
+      const finalUsername = getStoredUsername();
+      if (hasMorePosts) {
+        setStatus(`@${finalUsername || "使用者"} 已登入，目前已載入 ${postsData.length} 篇貼文`);
+      } else {
+        setStatus(`@${finalUsername || "使用者"} 已登入，已載入全部貼文，共 ${postsData.length} 篇`);
+      }
+    } catch (err) {
+      setStatus("載入貼文失敗：" + err.message);
+    } finally {
+      isLoadingPosts = false;
+      updatePostLoadButtons();
+    }
+  }
+
+  async function loadMorePosts() {
+    if (!getToken()) {
+      setStatus("請先登入 Threads");
+      return;
     }
 
-    return sortPosts(allPosts);
+    if (!hasMorePosts) {
+      setStatus(`目前已載入全部貼文，共 ${postsData.length} 篇`);
+      updatePostLoadButtons();
+      return;
+    }
+
+    await loadPostsBatch({ append: true });
+  }
+
+  async function loadAllPosts() {
+    if (!getToken()) {
+      setStatus("請先登入 Threads");
+      return;
+    }
+
+    if (!hasMorePosts) {
+      setStatus(`目前已載入全部貼文，共 ${postsData.length} 篇`);
+      updatePostLoadButtons();
+      return;
+    }
+
+    if (isLoadingPosts) return;
+
+    try {
+      isLoadingPosts = true;
+      updatePostLoadButtons();
+
+      while (hasMorePosts) {
+        setStatus(`正在載入全部貼文... 目前已載入 ${postsData.length} 篇`);
+        const result = await getPostsPage(postsNextAfter);
+        const newPosts = result.posts || [];
+        postsData = mergePosts(postsData, newPosts);
+        postsNextAfter = result.nextAfter || "";
+        hasMorePosts = Boolean(postsNextAfter);
+
+        const selectedId = selectedPost?.id || "";
+        renderPostSelect(postsData, selectedId);
+      }
+
+      const finalUsername = getStoredUsername();
+      setStatus(`@${finalUsername || "使用者"} 已登入，已載入全部貼文，共 ${postsData.length} 篇`);
+
+      if (selectedPost) {
+        const selectedId = selectedPost.id;
+        selectedPost = postsData.find(p => p.id === selectedId) || selectedPost;
+        renderPostPreview(selectedPost);
+      }
+    } catch (err) {
+      setStatus("載入全部貼文失敗：" + err.message);
+    } finally {
+      isLoadingPosts = false;
+      updatePostLoadButtons();
+    }
   }
 
   async function autoLoadPosts() {
     if (isLoadingPosts) return;
     if (!getToken()) return;
 
-    try {
-      isLoadingPosts = true;
-      const username = getStoredUsername();
-
-      if (username) {
-        setStatus(`@${username} 已登入，正在自動載入貼文...`);
-      } else {
-        setStatus("已登入，正在自動載入貼文...");
-      }
-
-      const posts = await getAllPosts();
-      postsData = posts;
-      renderPostSelect(postsData);
-      renderPostPreview(null);
-
-      const finalUsername = getStoredUsername();
-      if (finalUsername) {
-        setStatus(`@${finalUsername} 已登入，已自動載入 ${postsData.length} 篇貼文`);
-      } else {
-        setStatus(`已自動載入 ${postsData.length} 篇貼文`);
-      }
-    } catch (err) {
-      setStatus("自動載入貼文失敗：" + err.message);
-    } finally {
-      isLoadingPosts = false;
-    }
+    postsData = [];
+    postsNextAfter = "";
+    hasMorePosts = false;
+    renderPostSelect([]);
+    await loadPostsBatch({ append: false });
   }
 
   async function getPostDetail(postId) {
@@ -1444,6 +1588,8 @@
     currentRoundWinnerSet = new Set();
     isLoadingReplies = false;
     isLoadingPosts = false;
+    postsNextAfter = "";
+    hasMorePosts = false;
 
     postSelect.innerHTML = `<option value="">請先登入並等待系統自動載入貼文</option>`;
     postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
@@ -1458,6 +1604,7 @@
     closeResultModal();
     closeDonateModal();
     renderHistory();
+    updatePostLoadButtons();
   }
 
   async function init() {
@@ -1469,6 +1616,7 @@
       : "#";
 
     renderHistory();
+    updatePostLoadButtons();
 
     if (!token) {
       updateAuthUI("");
@@ -1480,13 +1628,13 @@
       if (storedUsername) {
         updateAuthUI(storedUsername);
         renderHistory();
-        setStatus(`@${storedUsername} 已登入，正在自動載入貼文...`);
+        setStatus(`@${storedUsername} 已登入，正在自動載入前 ${POSTS_BATCH_SIZE} 篇貼文...`);
       } else {
         setStatus("已偵測到登入資料，正在讀取帳號資訊...");
         const me = await fetchAndStoreProfile();
         if (me?.username) {
           renderHistory();
-          setStatus(`@${me.username} 已登入，正在自動載入貼文...`);
+          setStatus(`@${me.username} 已登入，正在自動載入前 ${POSTS_BATCH_SIZE} 篇貼文...`);
         } else {
           updateAuthUI("");
           setStatus("已登入，但尚未取得帳號資訊");
@@ -1507,12 +1655,21 @@
   };
 
   logoutBtn.onclick = () => {
-    clearToken();
-    clearStoredUser();
+    clearLoginData();
     updateAuthUI("");
     resetUiAfterLogout();
     setStatus("已登出");
   };
+
+  clearLoginDataBtn.onclick = () => {
+    clearLoginData();
+    updateAuthUI("");
+    resetUiAfterLogout();
+    setStatus("已清除登入資料，請重新登入");
+  };
+
+  loadMorePostsBtn.onclick = loadMorePosts;
+  loadAllPostsBtn.onclick = loadAllPosts;
 
   postSelect.addEventListener("change", async (e) => {
     const postId = e.target.value;
