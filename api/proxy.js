@@ -8,6 +8,14 @@ function isSafeCursor(value) {
   return typeof value === "string" && value.length > 0 && /^[A-Za-z0-9%._=-]+$/.test(value);
 }
 
+function isSafeLimit(value) {
+  if (value == null || value === "") return true;
+  if (!/^\d+$/.test(String(value))) return false;
+
+  const num = Number(value);
+  return num >= 1 && num <= 100;
+}
+
 function validatePath(path) {
   if (typeof path !== "string" || !path.trim()) {
     return false;
@@ -18,32 +26,39 @@ function validatePath(path) {
 
   if (pathname === "me") {
     if (!isSafeFields(params.get("fields"))) return false;
+
     for (const key of params.keys()) {
       if (!["fields"].includes(key)) return false;
     }
+
     return true;
   }
 
   if (pathname === "me/threads") {
     const fields = params.get("fields");
     const after = params.get("after");
+    const limit = params.get("limit");
 
     if (!isSafeFields(fields)) return false;
     if (after && !isSafeCursor(after)) return false;
+    if (!isSafeLimit(limit)) return false;
 
     for (const key of params.keys()) {
-      if (!["fields", "after"].includes(key)) return false;
+      if (!["fields", "after", "limit"].includes(key)) return false;
     }
+
     return true;
   }
 
   if (/^\d+$/.test(pathname)) {
     const fields = params.get("fields");
+
     if (!isSafeFields(fields)) return false;
 
     for (const key of params.keys()) {
       if (!["fields"].includes(key)) return false;
     }
+
     return true;
   }
 
@@ -54,11 +69,12 @@ function validatePath(path) {
 
     if (!isSafeFields(fields)) return false;
     if (after && !isSafeCursor(after)) return false;
-    if (limit && !/^\d+$/.test(limit)) return false;
+    if (!isSafeLimit(limit)) return false;
 
     for (const key of params.keys()) {
       if (!["fields", "after", "limit"].includes(key)) return false;
     }
+
     return true;
   }
 
