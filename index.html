@@ -1585,12 +1585,12 @@
 
       await loadInitialPosts();
     } catch (err) {
-      clearToken();
-      clearStoredUser();
-      updateAuthUI("");
-      updatePostLoadButtons();
-      resetUiAfterLogout();
-      setStatus("自動初始化失敗，請洽管理員取得免費使用權限");
+console.error("初始化錯誤：", err);
+
+setStatus("初始化失敗（可能是Threads API暫時異常），請重新整理");
+
+updateAuthUI(getStoredUsername() || "");
+updatePostLoadButtons();
     }
   }
 
