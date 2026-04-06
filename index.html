@@ -385,6 +385,46 @@
       color: #666;
       margin: 0 4px;
     }
+
+    .collapsible-box {
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .collapsible-box summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 16px;
+      font-weight: bold;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .collapsible-box summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .collapsible-box summary::after {
+      content: "＋";
+      font-size: 20px;
+      line-height: 1;
+      color: #666;
+      flex-shrink: 0;
+    }
+
+    .collapsible-box[open] summary::after {
+      content: "－";
+    }
+
+    .collapsible-content {
+      padding: 0 16px 16px;
+      border-top: 1px solid #f0f0f0;
+    }
   </style>
 </head>
 <body>
@@ -502,11 +542,6 @@
         <div id="qualificationSummaryBox" class="muted">請先載入留言</div>
       </div>
 
-      <div class="side-box">
-        <h3 style="margin-bottom:10px;">留言名單</h3>
-        <div id="replyListBox" class="muted">請先選擇貼文</div>
-      </div>
-
       <div class="winner-box">
         <div class="winner-title">中獎者</div>
         <div id="winnerBox" class="muted">尚未抽獎</div>
@@ -524,6 +559,15 @@
         </ul>
       </div>
     </div>
+  </div>
+
+  <div class="panel">
+    <details class="collapsible-box" id="replyListDetails">
+      <summary id="replyListSummaryText">留言名單（符合條件 0 則）</summary>
+      <div class="collapsible-content">
+        <div id="replyListBox" class="muted">請先選擇貼文</div>
+      </div>
+    </details>
   </div>
 
   <div id="resultModal" class="modal-backdrop" aria-hidden="true">
@@ -574,6 +618,8 @@
   const postSelect = document.getElementById("postSelect");
   const postPreviewBox = document.getElementById("postPreviewBox");
   const replyListBox = document.getElementById("replyListBox");
+  const replyListSummaryText = document.getElementById("replyListSummaryText");
+  const replyListDetails = document.getElementById("replyListDetails");
   const winnerBox = document.getElementById("winnerBox");
   const resultCard = document.getElementById("resultCard");
   const selectedPostTitle = document.getElementById("selectedPostTitle");
@@ -628,6 +674,10 @@
 
   function setStatus(text) {
     statusBox.textContent = text;
+  }
+
+  function updateReplyListSummary(count = 0) {
+    replyListSummaryText.textContent = `留言名單（符合條件 ${count} 則）`;
   }
 
   function getToken() {
@@ -926,6 +976,7 @@
     replyCountPill.textContent = `留言數：${allReplies.length}`;
     eligibleCountPill.textContent = `符合條件：${eligibleReplies.length}`;
     uniqueCountPill.textContent = `去重複人數：${uniqueUsers.length}`;
+    updateReplyListSummary(eligibleReplies.length);
   }
 
   function renderQualificationSummary() {
@@ -991,6 +1042,8 @@
   }
 
   function renderReplyList(replies) {
+    updateReplyListSummary(replies.length);
+
     if (!replies.length) {
       replyListBox.innerHTML = `<div class="muted">目前沒有符合條件的留言</div>`;
       return;
@@ -1171,7 +1224,6 @@
       updatePostLoadButtons();
 
       const username = getStoredUsername();
-      const currentCount = postsData.length;
       const loadingText = append
         ? `@${username || "使用者"} 已登入，正在載入更多貼文...`
         : `@${username || "使用者"} 已登入，正在載入前 ${POSTS_BATCH_SIZE} 篇貼文...`;
@@ -1500,6 +1552,7 @@
     lastEstimatedReplyCount = null;
     currentRoundWinnerSet = new Set();
 
+    replyListDetails.open = false;
     renderReplyList([]);
     renderWinners([]);
     updateCounts([], []);
@@ -1522,6 +1575,7 @@
     renderPostPreview(selectedPost);
     replyListBox.innerHTML = `<div class="muted">正在自動載入留言...</div>`;
     qualificationSummaryBox.innerHTML = `<div class="muted">正在整理資格摘要...</div>`;
+    updateReplyListSummary(0);
 
     await loadReplies(selectedPost.id);
   }
@@ -1568,6 +1622,7 @@
       setStatus("載入留言失敗：" + err.message);
       replyListBox.innerHTML = `<div class="muted">載入留言失敗</div>`;
       qualificationSummaryBox.innerHTML = `<div class="muted">載入資格摘要失敗</div>`;
+      updateReplyListSummary(0);
     } finally {
       isLoadingReplies = false;
     }
@@ -1594,6 +1649,8 @@
     postSelect.innerHTML = `<option value="">請先登入並等待系統自動載入貼文</option>`;
     postPreviewBox.innerHTML = `<div class="muted">請先選擇一篇貼文</div>`;
     replyListBox.innerHTML = `<div class="muted">請先選擇貼文</div>`;
+    replyListDetails.open = false;
+    updateReplyListSummary(0);
     winnerBox.innerHTML = `<div class="muted">尚未抽獎</div>`;
     resultCard.classList.add("hidden");
     resultCard.innerHTML = "";
@@ -1617,6 +1674,8 @@
 
     renderHistory();
     updatePostLoadButtons();
+    updateReplyListSummary(0);
+    replyListDetails.open = false;
 
     if (!token) {
       updateAuthUI("");
