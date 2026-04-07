@@ -497,26 +497,58 @@
       z-index: -1;
     }
 
+    .modal-footer-split {
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-footer-left,
+    .modal-footer-right {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .modal-card-preview {
+      width: min(960px, 100%);
+    }
+
+    .image-preview-wrap {
+      max-height: 72vh;
+      overflow: auto;
+      background: #faf7ef;
+      border: 1px solid #ece1bf;
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .image-preview-wrap img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      background: white;
+    }
+
     .capture-card {
-      background: linear-gradient(180deg, var(--soft-gold-2) 0%, #fffaf0 100%);
+      width: 1080px;
+      min-height: 1350px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      background: linear-gradient(180deg, #fff8e6 0%, #fffdf7 100%);
       border: 2px solid #ead087;
+      border-radius: 34px;
       color: var(--soft-ink);
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
       overflow: hidden;
-    }
-
-    .capture-square {
-      width: 1080px;
-      min-height: 1080px;
-      border-radius: 34px;
-      padding: 56px;
-    }
-
-    .capture-portrait {
-      width: 1080px;
-      min-height: 1350px;
-      border-radius: 34px;
-      padding: 56px;
+      padding: 52px;
     }
 
     .capture-header {
@@ -524,7 +556,7 @@
       justify-content: space-between;
       align-items: flex-start;
       gap: 20px;
-      margin-bottom: 26px;
+      margin-bottom: 4px;
     }
 
     .capture-brand {
@@ -535,22 +567,22 @@
     }
 
     .capture-main-title {
-      font-size: 56px;
+      font-size: 54px;
       line-height: 1.15;
       font-weight: 800;
-      margin: 8px 0 10px;
+      margin: 8px 0 8px;
       color: #3a2d0f;
     }
 
     .capture-subtitle {
-      font-size: 24px;
+      font-size: 22px;
       color: #6f5b2c;
       line-height: 1.5;
     }
 
     .capture-badge {
       border: 1px solid #ddc57a;
-      background: rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.7);
       padding: 10px 16px;
       border-radius: 999px;
       font-size: 18px;
@@ -559,40 +591,53 @@
       white-space: nowrap;
     }
 
-    .capture-grid {
+    .capture-meta-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin: 18px 0 24px;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .capture-meta-stack {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 16px;
     }
 
     .capture-info-box {
-      background: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.82);
       border: 1px solid #ecd99b;
       border-radius: 22px;
-      padding: 18px 20px;
+      padding: 14px 18px;
+    }
+
+    .capture-info-box.compact {
+      padding: 12px 16px;
     }
 
     .capture-label {
-      font-size: 18px;
+      font-size: 17px;
       color: #82692e;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .capture-value {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 700;
       color: #32260f;
       word-break: break-word;
-      line-height: 1.4;
+      line-height: 1.35;
+    }
+
+    .capture-info-box.compact .capture-value {
+      font-size: 20px;
     }
 
     .capture-post-box {
-      background: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.82);
       border: 1px solid #ecd99b;
       border-radius: 24px;
-      padding: 22px 24px;
-      margin-bottom: 24px;
+      padding: 20px 22px;
     }
 
     .capture-post-text {
@@ -607,8 +652,8 @@
       background: linear-gradient(180deg, #fff7de 0%, #fff1c5 100%);
       border: 1px solid #e3c56e;
       border-radius: 28px;
-      padding: 26px 28px;
-      margin-bottom: 22px;
+      padding: 24px 26px;
+      flex: 1;
     }
 
     .capture-winner-title {
@@ -627,7 +672,7 @@
     }
 
     .capture-winner-item {
-      background: rgba(255,255,255,0.72);
+      background: rgba(255,255,255,0.8);
       border: 1px solid #ebd79a;
       border-radius: 18px;
       padding: 16px 18px;
@@ -657,37 +702,12 @@
       word-break: break-word;
     }
 
-    .capture-condition-box {
-      background: rgba(255,255,255,0.72);
-      border: 1px solid #ecd99b;
-      border-radius: 24px;
-      padding: 22px 24px;
-      margin-bottom: 24px;
-    }
-
-    .capture-condition-title {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      color: #3a2d0f;
-    }
-
-    .capture-condition-list {
-      margin: 0;
-      padding-left: 24px;
-      font-size: 22px;
-      line-height: 1.7;
-      color: #453819;
-    }
-
     .capture-footer {
-      margin-top: auto;
-      padding-top: 8px;
+      padding-top: 4px;
       font-size: 20px;
       color: #7c6331;
       font-weight: 700;
-    }
-  </style>
+    }  </style>
 </head>
 <body>
 
@@ -810,12 +830,8 @@
         <div id="resultCard" class="result-card hidden"></div>
       </div>
 
-      <div class="screenshot-toolbar">
-        <select id="imageRatioSelect" class="image-select">
-          <option value="square">方形結果圖</option>
-          <option value="portrait">直式結果圖</option>
-        </select>
-        <button id="downloadResultImageBtn" class="btn-secondary hidden">截圖抽獎結果</button>
+      <div class="screenshot-toolbar hidden" id="resultImageToolbar">
+        <button id="downloadResultImageBtn" class="btn-secondary hidden">下載圖片</button>
       </div>
 
       <div class="side-box notice-box">
@@ -862,10 +878,28 @@
       <div class="modal-title">抽獎結果</div>
       <div id="modalSub" class="modal-sub"></div>
       <div id="modalWinners" class="modal-winners"></div>
+      <div class="modal-footer modal-footer-split">
+        <div class="modal-footer-left">
+          <button id="modalPreviewBtn" class="btn-secondary">預覽抽獎結果圖</button>
+        </div>
+        <div class="modal-footer-right">
+          <button id="modalCopyBtn" class="btn-copy">複製名單</button>
+          <button id="modalAnnouncementBtn" class="btn-copy">複製中獎文案</button>
+          <button id="modalCloseBtn" class="btn-primary">關閉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="imagePreviewModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card modal-card-preview">
+      <div class="modal-title">抽獎結果圖預覽</div>
+      <div class="image-preview-wrap">
+        <img id="resultPreviewImage" alt="抽獎結果圖預覽" />
+      </div>
       <div class="modal-footer">
-        <button id="modalCopyBtn" class="btn-copy">複製名單</button>
-        <button id="modalAnnouncementBtn" class="btn-copy">複製中獎文案</button>
-        <button id="modalCloseBtn" class="btn-primary">關閉</button>
+        <button id="previewDownloadBtn" class="btn-secondary">下載圖片</button>
+        <button id="previewCloseBtn" class="btn-primary">關閉</button>
       </div>
     </div>
   </div>
@@ -922,7 +956,7 @@
   const resultCard = document.getElementById("resultCard");
   const winnerCaptureArea = document.getElementById("winnerCaptureArea");
   const downloadResultImageBtn = document.getElementById("downloadResultImageBtn");
-  const imageRatioSelect = document.getElementById("imageRatioSelect");
+  const resultImageToolbar = document.getElementById("resultImageToolbar");
   const captureStage = document.getElementById("captureStage");
 
   const selectedPostTitle = document.getElementById("selectedPostTitle");
@@ -953,9 +987,15 @@
   const resultModal = document.getElementById("resultModal");
   const modalSub = document.getElementById("modalSub");
   const modalWinners = document.getElementById("modalWinners");
+  const modalPreviewBtn = document.getElementById("modalPreviewBtn");
   const modalCopyBtn = document.getElementById("modalCopyBtn");
   const modalAnnouncementBtn = document.getElementById("modalAnnouncementBtn");
   const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+  const imagePreviewModal = document.getElementById("imagePreviewModal");
+  const resultPreviewImage = document.getElementById("resultPreviewImage");
+  const previewDownloadBtn = document.getElementById("previewDownloadBtn");
+  const previewCloseBtn = document.getElementById("previewCloseBtn");
 
   const donateModal = document.getElementById("donateModal");
   const openDonateBtn = document.getElementById("openDonateBtn");
@@ -971,6 +1011,7 @@
   let isLoadingReplies = false;
   let isLoadingPosts = false;
   let currentRoundWinnerSet = new Set();
+  let lastResultImageDataUrl = "";
 
   let postsNextAfter = "";
   let hasMorePosts = false;
@@ -1461,6 +1502,9 @@
       resultCard.classList.add("hidden");
       resultCard.innerHTML = "";
       downloadResultImageBtn.classList.add("hidden");
+    resultImageToolbar.classList.add("hidden");
+      resultImageToolbar.classList.add("hidden");
+      lastResultImageDataUrl = "";
       return;
     }
 
@@ -1470,24 +1514,106 @@
       </ol>
     `;
 
-    const postPreview = (selectedPost?.text || "（沒有文字內容）").slice(0, 50);
-    const keywordText = keywordInput.value.trim() || "無";
-    const mustTagText = mustTagCheckbox.checked ? "是" : "否";
-    const dedupeText = dedupeCheckbox.checked ? "是" : "否";
-    const excludePrevText = excludePreviousWinnersCheckbox.checked ? "是" : "否";
+    const postPreview = truncatePostSummary(selectedPost?.text || "（沒有文字內容）", 2);
     const poolSize = buildPool(false).length;
 
     resultCard.innerHTML = `
       <div style="font-size:18px;font-weight:800;margin-bottom:8px;">抽獎結果</div>
-      <div class="tiny" style="margin-top:6px;">貼文：${escapeHtml(postPreview)}</div>
-      <div class="tiny">時間：${escapeHtml(formatDate(new Date().toISOString()))}</div>
-      <div class="tiny">母池人數：${poolSize}</div>
-      <div class="tiny">條件：關鍵字=${escapeHtml(keywordText)}｜需Tag=${mustTagText}｜去重複=${dedupeText}｜重抽排除已中獎=${excludePrevText}</div>
+      <div class="tiny" style="margin-top:6px;">貼文摘要：${escapeHtml(postPreview)}</div>
+      <div class="tiny">貼文日期：${escapeHtml(formatDate(selectedPost?.timestamp))}</div>
+      <div class="tiny">抽獎時間：${escapeHtml(formatDate(new Date().toISOString()))}</div>
+      <div class="tiny">母池＋中獎：${poolSize} 人／${winners.length} 位</div>
       <div style="margin-top:12px;font-size:16px;line-height:1.8;"><strong>中獎名單：</strong>${winners.map((w, i) => `${i + 1}. @${escapeHtml(w)}`).join("　")}</div>
       <div class="tiny" style="margin-top:10px;">本 Threads 抽獎工具由 @lt_letsgo_ 製作</div>
     `;
     resultCard.classList.remove("hidden");
     downloadResultImageBtn.classList.remove("hidden");
+    resultImageToolbar.classList.remove("hidden");
+  }
+
+  function truncatePostSummary(text, maxLines = 6, maxCharsPerLine = 26) {
+    const raw = String(text || "（沒有文字內容）").trim();
+    const normalized = raw.replace(/\r/g, "");
+    const sourceLines = normalized.split("\n");
+    const wrapped = [];
+
+    for (const srcLine of sourceLines) {
+      const line = srcLine || "";
+      if (!line) {
+        wrapped.push("");
+        continue;
+      }
+      for (let i = 0; i < line.length; i += maxCharsPerLine) {
+        wrapped.push(line.slice(i, i + maxCharsPerLine));
+      }
+    }
+
+    const trimmed = wrapped.slice(0, maxLines).join("\n").trim();
+    const hasMore = wrapped.length > maxLines || trimmed.length < normalized.length;
+    return hasMore ? `${trimmed}\n...` : trimmed;
+  }
+
+  function getResultFileName() {
+    const postDate = formatDateForFilename(selectedPost?.timestamp);
+    const winnerCountText = `中獎${lastWinners.length}位`;
+    const postLast4 = getPostIdLast4();
+    return `threads-lucky${postDate}${winnerCountText}${postLast4}.png`;
+  }
+
+  async function buildResultImageDataUrl() {
+    if (!lastWinners.length) {
+      throw new Error("目前沒有可產生的抽獎結果圖");
+    }
+
+    if (typeof html2canvas === "undefined") {
+      throw new Error("截圖元件載入失敗，請重新整理頁面後再試");
+    }
+
+    captureStage.innerHTML = buildCaptureTemplateHtml();
+    const target = captureStage.firstElementChild;
+
+    try {
+      const canvas = await html2canvas(target, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true
+      });
+      return canvas.toDataURL("image/png");
+    } finally {
+      captureStage.innerHTML = "";
+    }
+  }
+
+  async function ensureResultImageDataUrl() {
+    if (lastResultImageDataUrl) {
+      return lastResultImageDataUrl;
+    }
+    lastResultImageDataUrl = await buildResultImageDataUrl();
+    return lastResultImageDataUrl;
+  }
+
+  async function openImagePreviewModal() {
+    if (!lastWinners.length) {
+      setStatus("目前沒有可預覽的抽獎結果圖");
+      return;
+    }
+
+    try {
+      setButtonLoading(modalPreviewBtn, "產生預覽中...", true);
+      const dataUrl = await ensureResultImageDataUrl();
+      resultPreviewImage.src = dataUrl;
+      imagePreviewModal.classList.add("show");
+      imagePreviewModal.setAttribute("aria-hidden", "false");
+    } catch (err) {
+      setStatus("預覽圖片失敗：" + (err?.message || "未知錯誤"));
+    } finally {
+      setButtonLoading(modalPreviewBtn, "產生預覽中...", false);
+    }
+  }
+
+  function closeImagePreviewModal() {
+    imagePreviewModal.classList.remove("show");
+    imagePreviewModal.setAttribute("aria-hidden", "true");
   }
 
   function buildAnnouncementText() {
@@ -1962,42 +2088,38 @@
     ];
   }
 
-  function buildCaptureTemplateHtml(ratio = "square") {
-    const postPreview = selectedPost?.text || "（沒有文字內容）";
+  function buildCaptureTemplateHtml() {
+    const postPreview = truncatePostSummary(selectedPost?.text || "（沒有文字內容）", 6, 28);
     const postDate = formatDate(selectedPost?.timestamp);
     const drawTime = formatDate(new Date().toISOString());
     const poolSize = buildPool(false).length;
-    const conditions = buildConditionSummaryArray();
     const winnerCount = lastWinners.length;
-    const ratioClass = ratio === "portrait" ? "capture-portrait" : "capture-square";
 
     return `
-      <div class="capture-card ${ratioClass}">
+      <div class="capture-card">
         <div class="capture-header">
           <div>
             <div class="capture-brand">Threads Lucky Draw</div>
             <div class="capture-main-title">抽獎結果公布</div>
             <div class="capture-subtitle">依照設定條件，公平隨機抽出本次中獎者</div>
           </div>
-          <div class="capture-badge">${ratio === "portrait" ? "直式結果圖" : "方形結果圖"}</div>
+          <div class="capture-badge">中獎 ${winnerCount} 位</div>
         </div>
 
-        <div class="capture-grid">
-          <div class="capture-info-box">
-            <div class="capture-label">貼文日期</div>
-            <div class="capture-value">${escapeHtml(postDate)}</div>
+        <div class="capture-meta-grid">
+          <div class="capture-meta-stack">
+            <div class="capture-info-box compact">
+              <div class="capture-label">貼文日期</div>
+              <div class="capture-value">${escapeHtml(postDate)}</div>
+            </div>
+            <div class="capture-info-box compact">
+              <div class="capture-label">抽獎時間</div>
+              <div class="capture-value">${escapeHtml(drawTime)}</div>
+            </div>
           </div>
           <div class="capture-info-box">
-            <div class="capture-label">抽獎時間</div>
-            <div class="capture-value">${escapeHtml(drawTime)}</div>
-          </div>
-          <div class="capture-info-box">
-            <div class="capture-label">母池人數</div>
-            <div class="capture-value">${escapeHtml(String(poolSize))}</div>
-          </div>
-          <div class="capture-info-box">
-            <div class="capture-label">中獎者數量</div>
-            <div class="capture-value">${escapeHtml(String(winnerCount))} 位</div>
+            <div class="capture-label">母池人數 / 中獎者數量</div>
+            <div class="capture-value">${escapeHtml(String(poolSize))} 人 / ${escapeHtml(String(winnerCount))} 位</div>
           </div>
         </div>
 
@@ -2018,13 +2140,6 @@
           </ol>
         </div>
 
-        <div class="capture-condition-box">
-          <div class="capture-condition-title">本次抽獎條件</div>
-          <ul class="capture-condition-list">
-            ${conditions.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-          </ul>
-        </div>
-
         <div class="capture-footer">
           本 Threads 抽獎工具由 @lt_letsgo_ 製作
         </div>
@@ -2040,44 +2155,28 @@
 
   async function downloadResultImage() {
     if (!lastWinners.length) {
-      setStatus("目前沒有可截圖的抽獎結果");
-      return;
-    }
-
-    if (typeof html2canvas === "undefined") {
-      setStatus("截圖元件載入失敗，請重新整理頁面後再試");
+      setStatus("目前沒有可下載的抽獎結果");
       return;
     }
 
     try {
-      setButtonLoading(downloadResultImageBtn, "截圖產生中...", true);
+      const triggerBtn = imagePreviewModal.classList.contains("show") ? previewDownloadBtn : downloadResultImageBtn;
+      setButtonLoading(triggerBtn, "圖片下載中...", true);
 
-      const ratio = imageRatioSelect.value === "portrait" ? "portrait" : "square";
-      captureStage.innerHTML = buildCaptureTemplateHtml(ratio);
-      const target = captureStage.firstElementChild;
-
-      const canvas = await html2canvas(target, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true
-      });
-
+      const dataUrl = await ensureResultImageDataUrl();
       const link = document.createElement("a");
-      const postDate = formatDateForFilename(selectedPost?.timestamp);
-      const winnerCountText = `中獎${lastWinners.length}位`;
-      const postLast4 = getPostIdLast4();
-      const fileName = `threads-lucky${postDate}${winnerCountText}${postLast4}.png`;
+      const fileName = getResultFileName();
 
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.download = fileName;
       link.click();
 
       setStatus(`已下載抽獎結果圖片：${fileName}`);
     } catch (err) {
-      setStatus("截圖下載失敗：" + (err?.message || "未知錯誤"));
+      setStatus("圖片下載失敗：" + (err?.message || "未知錯誤"));
     } finally {
-      captureStage.innerHTML = "";
-      setButtonLoading(downloadResultImageBtn, "截圖產生中...", false);
+      setButtonLoading(downloadResultImageBtn, "圖片下載中...", false);
+      setButtonLoading(previewDownloadBtn, "圖片下載中...", false);
     }
   }
 
@@ -2096,11 +2195,13 @@
     lastWinners = [];
     lastEstimatedReplyCount = null;
     currentRoundWinnerSet = new Set();
+    lastResultImageDataUrl = "";
 
     replyListDetails.open = false;
     resetReplyDisplayState();
     renderReplyList();
     renderWinners([]);
+    resultImageToolbar.classList.add("hidden");
     updateCounts([], []);
     showEstimatedReplyCount(null);
     renderQualificationSummary();
@@ -2189,6 +2290,7 @@
     lastWinners = [];
     lastEstimatedReplyCount = null;
     currentRoundWinnerSet = new Set();
+    lastResultImageDataUrl = "";
     isLoadingReplies = false;
     isLoadingPosts = false;
     postsNextAfter = "";
@@ -2204,12 +2306,14 @@
     resultCard.classList.add("hidden");
     resultCard.innerHTML = "";
     downloadResultImageBtn.classList.add("hidden");
+    resultImageToolbar.classList.add("hidden");
     qualificationSummaryBox.innerHTML = `<div class="muted">請先載入留言</div>`;
     selectedPostTitle.textContent = "尚未選擇貼文";
     updateCounts([], []);
     showEstimatedReplyCount(null);
     closeResultModal();
     closeDonateModal();
+    closeImagePreviewModal();
     renderHistory();
     updatePostLoadButtons();
   }
@@ -2227,6 +2331,7 @@
     updateReplyListSummary(0);
     replyListDetails.open = false;
     downloadResultImageBtn.classList.add("hidden");
+    resultImageToolbar.classList.add("hidden");
     resetReplyDisplayState();
 
     if (!token) {
@@ -2316,9 +2421,12 @@
   copyWinnersBtn.onclick = copyWinners;
   copyAnnouncementBtn.onclick = copyAnnouncement;
   downloadResultImageBtn.onclick = downloadResultImage;
+  modalPreviewBtn.onclick = openImagePreviewModal;
   modalCopyBtn.onclick = copyWinners;
   modalAnnouncementBtn.onclick = copyAnnouncement;
   modalCloseBtn.onclick = closeResultModal;
+  previewDownloadBtn.onclick = downloadResultImage;
+  previewCloseBtn.onclick = closeImagePreviewModal;
 
   openDonateBtn.onclick = openDonateModal;
   donateCloseBtn.onclick = closeDonateModal;
@@ -2335,10 +2443,17 @@
     }
   });
 
+  imagePreviewModal.addEventListener("click", (e) => {
+    if (e.target === imagePreviewModal) {
+      closeImagePreviewModal();
+    }
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeResultModal();
       closeDonateModal();
+      closeImagePreviewModal();
     }
   });
 
